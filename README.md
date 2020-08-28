@@ -20,6 +20,12 @@ One PHP extension from the list:
 
 Most hosting providers have it turned on already, but if not found, check your control panel.
 
+Thanks to third-party class developers:
+
+- https://github.com/simplito/bigint-wrapper-php
+- https://github.com/simplito/bn-php
+- https://github.com/simplito/elliptic-php
+
 ## Examples
 
 Look into test directory.
