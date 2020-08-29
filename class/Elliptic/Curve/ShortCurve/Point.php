@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve\ShortCurve;
 
 use JsonSerializable;
@@ -312,5 +311,3 @@ class Point extends \Elliptic\Curve\BaseCurve\Point implements JsonSerializable
         return $this->curve->jpoint($this->x, $this->y, $this->curve->one);
     }
 }
-
-?>

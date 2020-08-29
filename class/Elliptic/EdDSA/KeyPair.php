@@ -47,7 +47,7 @@ class KeyPair {
     }
 
     public function pubBytes() {
-        if (!$this->_pubBytes) 
+        if (!$this->_pubBytes)
             $this->_pubBytes = $this->eddsa->encodePoint($this->pub());
         return $this->_pubBytes;
     }

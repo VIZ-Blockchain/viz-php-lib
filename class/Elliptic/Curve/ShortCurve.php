@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve;
 
 use Elliptic\Curve\ShortCurve\Point;
@@ -32,7 +31,7 @@ class ShortCurve extends BaseCurve
         // If curve is endomorphic, precalculate beta and lambda
         $this->endo = $this->_getEndomorphism($conf);
         $this->_endoWnafT1 = array(0,0,0,0);
-        $this->_endoWnafT2 = array(0,0,0,0);        
+        $this->_endoWnafT2 = array(0,0,0,0);
     }
 
     private function _getEndomorphism($conf)
@@ -300,5 +299,3 @@ class ShortCurve extends BaseCurve
         return new JPoint($this, $x, $y, $z);
     }
 }
-
-?>

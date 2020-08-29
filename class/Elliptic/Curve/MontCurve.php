@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve;
 
 use Elliptic\Curve\MontCurve\Point;
@@ -45,5 +44,3 @@ class MontCurve extends BaseCurve
         return Point::fromJSON($this, $obj);
     }
 }
-
-?>

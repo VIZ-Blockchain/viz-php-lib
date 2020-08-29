@@ -2,6 +2,7 @@
 namespace VIZ;
 
 use BI\BigInteger;
+
 class Utils{
 	// Base58 encoding/decoding functions - all credits go to https://github.com/stephen-hill/base58php
 	// The MIT License (MIT) Copyright (c) 2014 Stephen Hill <stephen@gatekiller.co.uk>

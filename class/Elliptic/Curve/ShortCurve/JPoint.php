@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve\ShortCurve;
 
 use BN\BN;
@@ -484,5 +483,3 @@ class JPoint extends \Elliptic\Curve\BaseCurve\Point
         return $this->z->isZero();
     }
 }
-
-?>

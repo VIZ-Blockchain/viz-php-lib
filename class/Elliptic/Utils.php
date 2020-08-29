@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic;
 
 use \Exception;
@@ -35,14 +34,14 @@ class Utils
         if( !is_array($msg) )
             throw new Exception("Not implemented");
 
-        $binary = call_user_func_array("pack", array_merge(["C*"], $msg)); 
+        $binary = call_user_func_array("pack", array_merge(["C*"], $msg));
         return bin2hex($binary);
     }
 
     public static function toBin($msg, $enc = false)
     {
         if( is_array($msg) )
-            return call_user_func_array("pack", array_merge(["C*"], $msg)); 
+            return call_user_func_array("pack", array_merge(["C*"], $msg));
 
         if( $enc === "hex" )
             return hex2bin($msg);
@@ -162,5 +161,3 @@ class Utils
         $array[$key] = $value;
     }
 }
-
-?>

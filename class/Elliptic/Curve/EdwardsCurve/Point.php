@@ -10,7 +10,7 @@ class Point extends \Elliptic\Curve\BaseCurve\Point
     public $z;
     public $t;
     public $zOne;
-    
+
     function __construct($curve, $x = null, $y = null, $z = null, $t = null) {
         parent::__construct($curve, 'projective');
         if ($x == null && $y == null && $z == null) {
@@ -44,9 +44,9 @@ class Point extends \Elliptic\Curve\BaseCurve\Point
     }
 
     public static function fromJSON($curve, $obj) {
-        return new Point($curve, 
-            isset($obj[0]) ? $obj[0] : null, 
-            isset($obj[1]) ? $obj[1] : null, 
+        return new Point($curve,
+            isset($obj[0]) ? $obj[0] : null,
+            isset($obj[1]) ? $obj[1] : null,
             isset($obj[2]) ? $obj[2] : null
             );
     }

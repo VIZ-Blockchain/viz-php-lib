@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic;
 
 use Elliptic\Curve\PresetCurve;
@@ -8,14 +7,14 @@ class Curves
 {
     private static $curves;
 
-    public static function hasCurve($name) { 
-        return isset(self::$curves[$name]); 
+    public static function hasCurve($name) {
+        return isset(self::$curves[$name]);
     }
-    public static function getCurve($name) { 
+    public static function getCurve($name) {
         if (!isset(self::$curves[$name])) {
             throw new \Exception('Unknown curve ' . $name);
         }
-        return self::$curves[$name]; 
+        return self::$curves[$name];
     }
 
     public static function defineCurve($name, $options)
@@ -971,5 +970,3 @@ Curves::defineCurve("secp256k1", array(
         $pre
     )
 ));
-
-?>

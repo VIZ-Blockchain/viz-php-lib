@@ -214,5 +214,3 @@ class Red
         return $res;
     }
 }
-
-?>

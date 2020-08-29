@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve;
 
 use Elliptic\Utils;
@@ -204,7 +203,7 @@ abstract class BaseCurve
                 $comb[1] = $points[$a]->toJ()->mixedAdd($points[$b]);
                 $comb[2] = $points[$a]->toJ()->mixedAdd($points[$b]->neg());
             }
-            
+
             $index = array(
                 -3, /* -1 -1 */
                 -1, /* -1  0 */
@@ -317,5 +316,3 @@ abstract class BaseCurve
         throw new Exception("Unknown point format");
     }
 }
-
-?>

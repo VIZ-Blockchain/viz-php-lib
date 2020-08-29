@@ -363,7 +363,7 @@ class BN implements JsonSerializable
 
         if( $extended != null )
             $extended = $this->maskn($bits);
-               
+
         if ($bits < 54) {
             $this->bi = $this->bi->div(1 << $bits);
         } else {
@@ -447,7 +447,7 @@ class BN implements JsonSerializable
 
     public function abs() {
         $res = clone($this);
-        if ($res->bi->sign() < 0) 
+        if ($res->bi->sign() < 0)
             $res->bi = $res->bi->abs();
         return $res;
     }
@@ -470,7 +470,7 @@ class BN implements JsonSerializable
 
     public function umod(BN $num) {
         if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
-        $tmp = $num->bi->sign() < 0 ? $num->bi->abs() : $num->bi;        
+        $tmp = $num->bi->sign() < 0 ? $num->bi->abs() : $num->bi;
         $res = clone($this);
         $res->bi = $this->bi->mod($tmp);
         return $res;
@@ -665,7 +665,7 @@ class BN implements JsonSerializable
         if ($this->bi->sign() < 0)
             $this->bi = $this->bi->add($this->red->m->bi);
         return $this;
-            
+
 //        return $this->red->isub($this, $num);
     }
 
@@ -680,7 +680,7 @@ class BN implements JsonSerializable
             throw new Exception("redMul works only with red numbers");
         $res = clone($this);
         $res->bi = $this->bi->mul($num->bi)->mod($this->red->m->bi);
-        return $res;            
+        return $res;
         /*
         return $this->red->mul($this, $num);
         */

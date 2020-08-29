@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\EC;
 
 use BN\BN;

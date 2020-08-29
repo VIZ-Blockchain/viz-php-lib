@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic;
 
 class HmacDRBG
@@ -42,7 +41,7 @@ class HmacDRBG
         $entropy  = Utils::toBin($options["entropy"], $options["entropyEnc"]);
         $nonce  = Utils::toBin($options["nonce"], $options["nonceEnc"]);
         $pers  = Utils::toBin($options["pers"], $options["persEnc"]);
-        
+
         if (assert_options(ASSERT_ACTIVE)) {
             assert(strlen($entropy) >= ($this->minEntropy / 8));
         }
@@ -91,7 +90,7 @@ class HmacDRBG
 
         $kmac = $this->_hmac();
         hash_update($kmac, $this->V);
-        $this->V = hash_final($kmac, true);        
+        $this->V = hash_final($kmac, true);
     }
 
     // TODO: reseed()
@@ -131,5 +130,3 @@ class HmacDRBG
         return Utils::encode(Utils::toArray($res), $enc);
     }
 }
-
-?>

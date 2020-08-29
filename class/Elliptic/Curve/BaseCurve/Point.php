@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve\BaseCurve;
 
 use Elliptic\Utils;
@@ -116,5 +115,3 @@ abstract class Point
         return $r;
     }
 }
-
-?>

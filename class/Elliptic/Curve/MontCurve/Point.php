@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve\MontCurve;
 
 use BN\BN;
@@ -156,5 +155,3 @@ class Point extends \Elliptic\Curve\BaseCurve\Point
         return $this->x->fromRed();
     }
 }
-
-?>

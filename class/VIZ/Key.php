@@ -3,6 +3,7 @@ namespace VIZ;
 
 use VIZ\Utils;
 use Elliptic\EC;
+
 class Key{
 	public $ec;
 	public $private=false;

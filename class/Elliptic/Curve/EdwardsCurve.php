@@ -16,7 +16,7 @@ class EdwardsCurve extends BaseCurve
     public $d2;
     public $dd;
     public $oneC;
-    
+
     function __construct($conf)
     {
         // NOTE: Important as we are creating point in Base.call()
@@ -36,7 +36,7 @@ class EdwardsCurve extends BaseCurve
         }
         $this->oneC = ($conf["c"] | 0) == 1;
     }
-  
+
     public function _mulA($num) {
         if ($this->mOneA)
             return $num->redNeg();

@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic;
 
 use Elliptic\Curve\PresetCurve;
@@ -271,5 +270,3 @@ class EC
         throw new \Exception("Unable to find valid recovery factor");
     }
 }
-
-?>

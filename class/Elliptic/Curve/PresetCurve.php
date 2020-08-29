@@ -1,5 +1,4 @@
 <?php
-
 namespace Elliptic\Curve;
 
 class PresetCurve
@@ -23,5 +22,3 @@ class PresetCurve
         $this->hash = isset($options["hash"]) ? $options["hash"] : null;
     }
 }
-
-?>
