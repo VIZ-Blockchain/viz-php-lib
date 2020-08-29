@@ -1,5 +1,9 @@
 # viz-php-lib
 
+<p align="center">
+<img height="200" src="logo-viz-php-lib.svg" alt="VIZ PHP Library">
+</p>
+
 Native PHP class for VIZ Keys, Transaction, JsonRPC
 
 ## Features
