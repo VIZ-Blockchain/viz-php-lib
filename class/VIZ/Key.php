@@ -50,11 +50,11 @@ class Key{
 		}
 		return implode('',$pieces);
 	}
-	function gen($seed='',$salt=''){
-		if(!$salt){
+	function gen($seed='',$salt=true){
+		if(true===$salt){
 			$salt=$this->random_str(40);
 		}
-		$seed=$salt.$seed;
+		$seed=$seed.$salt;
 		$hex_key=hash('sha256',$seed);
 		$this->import_hex($hex_key);
 		$this->private=true;

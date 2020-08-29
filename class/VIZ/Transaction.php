@@ -54,6 +54,9 @@ class Transaction{
 	}
 	function build($operations_json,$operations_data,$operations_count){
 		$dgp=$this->api->execute_method('get_dynamic_global_properties');
+		if(!$this->api->return_only_result){
+			$dgp=$dgp['result'];
+		}
 		if(!$dgp['head_block_number']){
 			return false;
 		}
@@ -66,6 +69,9 @@ class Transaction{
 		$api_count=0;
 		while(!$tapos_block_info){
 			$tapos_block_info=$this->api->execute_method('get_block_header',array($tapos_block));
+			if(!$this->api->return_only_result){
+				$tapos_block_info=$tapos_block_info['result'];
+			}
 			if(!$tapos_block_info){
 				$api_count++;
 				if($api_count>5){
