@@ -83,21 +83,39 @@ if(false===$account){
 }
 ```
 
-Transaction: init with endpoint and private key in wif, activate queue mode and add 2 operations, end queue and get result array. Execute transaction json from array. Add additional signature for multi-sig example (can be false if canonical signature was not found).
+Transaction: init with endpoint and private key in wif, build simple transaction with award operation and execute it.
 
 ```php
 <?php
 include('./class/autoloader.php');
+$initiator='account';
+$initiator_private_key='5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
 
-$tx=new VIZ\Transaction('https://node.viz.plus/','5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F');
-$tx->api->return_only_result=false;
-$tx->start_queue();
+$tx=new VIZ\Transaction('https://node.viz.plus/',$initiator_private_key);
+$tx->award($initiator,'committee',1000,0,'testing viz-php-lib award operation');
+var_dump($tx_data);
+
+$tx_status=$tx->execute($tx_data['json']);
+var_dump($tx_status);
+```
+
+Init with endpoint and private key in wif, activate queue mode and add 2 operations, end queue and get result array. Execute transaction json from array. Add additional signature for multi-sig example (can be false if canonical signature was not found).
+
+```php
+<?php
+include('./class/autoloader.php');
 $initiator='some.account';
+$initiator_private_key='5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
+
+$tx=new VIZ\Transaction('https://node.viz.plus/',$initiator_private_key);
+$tx->start_queue();
 $tx->award($initiator,'committee',1000,0,'testing viz-php-lib multi-operations');
 $tx->award($initiator,'committee',2000,0,'testing viz-php-lib multi-operations 2');
 $tx_data=$tx->end_queue();
 var_dump($tx_data);
 
+//turn api flag to return all result (including error state)
+$tx->api->return_only_result=false;
 $tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 
