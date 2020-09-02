@@ -2,6 +2,7 @@
 namespace VIZ;
 
 use DateTime;
+use DateTimeZone;
 use VIZ\Key;
 use VIZ\JsonRPC;
 use VIZ\Utils;
@@ -94,7 +95,7 @@ class Transaction{
 			$this->signatures=[];
 
 			$expiration_time=time()+600+$nonce;//+10min+nonce
-			$expiration_str=date('Y-m-d\TH:i:s',$expiration_time);
+			$expiration_str=date('Y-m-d\TH:i:s',$expiration_time-(new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime()));
 
 			$tx_tapos=$ref_block_num_bin.$ref_block_prefix_bin_nice;
 			$raw_data=$this->chain_id.$tx_tapos.$this->encode_unixtime($expiration_time).$this->encode_uint8($operations_count).$operations_data.$tx_extension;
