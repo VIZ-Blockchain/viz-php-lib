@@ -235,6 +235,19 @@ class Transaction{
 		$raw.=$this->encode_asset($vesting_shares);
 		return [$json,$raw];
 	}
+
+	function build_witness_update($owner,$url,$block_signing_key){
+		$json='["witness_update",{';
+		$json.='"owner":"'.$owner.'"';
+		$json.=',"url":"'.$url.'"';
+		$json.=',"block_signing_key":"'.$block_signing_key.'"';
+		$json.='}]';
+		$raw='06';//operation number is 6
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_string($url);
+		$raw.=$this->encode_public_key($block_signing_key);
+		return [$json,$raw];
+	}
 	function start_queue(){
 		$this->queue=true;
 	}
