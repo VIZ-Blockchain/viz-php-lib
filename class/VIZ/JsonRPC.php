@@ -6,9 +6,11 @@ class JsonRpc{
 	public $debug=false;
 	public $request_arr=array();
 	public $result_arr=array();
-	public $post_num=1;
+	public $post_num=0;
+	public $increase_post_num=true;
 	public $header_arr=array();
 	public $host_ip=array();
+	public $accept_gzip=false;
 	public $check_ssl=true;
 	public $return_only_result=true;
 	public $read_timeout=3;//sec
@@ -142,6 +144,9 @@ class JsonRpc{
 		$request=$method." /".$path." HTTP/1.1\r\n";
 		$request.="Host: ".$host."\r\n";
 		$request.="Connection: close\r\n";
+		if($this->accept_gzip){
+			$request.="Accept-Encoding: gzip\r\n";
+		}
 		$request.="Content-Type: ".$content_type."\r\n";
 		foreach($this->header_arr as $k=>$v){
 			$request.=$k.": ".$v."\r\n";
@@ -247,8 +252,13 @@ class JsonRpc{
 		return array($headers,$clear_result);
 	}
 	function raw_method($method,$params){
+		if(!isset($this->api[$method])){
+			return false;
+		}
 		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$this->api[$method].'","'.$method.'",['.$params.']]}';
-		$this->post_num++;
+		if($this->increase_post_num){
+			$this->post_num++;
+		}
 		return $result;
 	}
 	function build_method($method,$params){
@@ -289,7 +299,9 @@ class JsonRpc{
 			$params_str=implode(',',$params_arr);
 		}
 		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$this->api[$method].'","'.$method.'",['.(($params)?$params_str:'').']]}';
-		$this->post_num++;
+		if($this->increase_post_num){
+			$this->post_num++;
+		}
 		return $result;
 	}
 	function execute_method($method,$params=array(),$debug=false){
@@ -299,7 +311,12 @@ class JsonRpc{
 		else{
 			$jsonrpc_query=$this->build_method($method,$params);
 		}
-		$result=$this->get_url($this->endpoint,$jsonrpc_query,$debug||$this->debug);
+		if(false===$jsonrpc_query){//not actual api method
+			$result=false;
+		}
+		else{
+			$result=$this->get_url($this->endpoint,$jsonrpc_query,$debug||$this->debug);
+		}
 		if(false!==$result){
 			list($header,$result)=$this->parse_web_result($result);
 			if($debug||$this->debug){
@@ -308,20 +325,25 @@ class JsonRpc{
 				print '<!-- HEADER: '.$header.' -->'.PHP_EOL;
 				print '<!-- RESULT: '.$result.' -->'.PHP_EOL;
 			}
+			if(false===strpos($header," 200 OK\r\n")){//check server status code
+				return false;//server code error
+			}
 			$result_arr=json_decode($result,true);
-			if($this->return_only_result){
+			if($this->return_only_result){//simple mode
 				if(isset($result_arr['result'])){
 					return $result_arr['result'];
 				}
 				else{
+					//error message in response, result not exist
 					return false;
 				}
 			}
-			else{
+			else{//extended mode with error message
 				return $result_arr;
 			}
 		}
 		else{
+			//can be not existed api method, socket error, server timeout
 			return false;
 		}
 	}
