@@ -92,7 +92,7 @@ $initiator='account';
 $initiator_private_key='5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
 
 $tx=new VIZ\Transaction('https://node.viz.plus/',$initiator_private_key);
-$tx->award($initiator,'committee',1000,0,'testing viz-php-lib award operation');
+$tx_data=$tx->award($initiator,'committee',1000,0,'testing viz-php-lib award operation');
 var_dump($tx_data);
 
 $tx_status=$tx->execute($tx_data['json']);

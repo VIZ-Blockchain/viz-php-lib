@@ -169,7 +169,8 @@ class Key{
 	function verify($data,$signature){
 		$data_hash=hash('sha256',$data);
 		if($this->private){
-			$public_key=$this->ec->keyFromPublic(($this->get_public_key())->hex,'hex',true);
+			$public_copy=$this->get_public_key();
+			$public_key=$this->ec->keyFromPublic($public_copy->hex,'hex',true);
 		}
 		else{
 			$public_key=$this->ec->keyFromPublic($this->hex,'hex',true);
