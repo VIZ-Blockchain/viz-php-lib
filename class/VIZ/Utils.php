@@ -7,7 +7,7 @@ class Utils{
 	// Base58 encoding/decoding functions - all credits go to https://github.com/stephen-hill/base58php
 	// The MIT License (MIT) Copyright (c) 2014 Stephen Hill <stephen@gatekiller.co.uk>
 	// Adapted for BI\BigInteger wrapper
-	function base58_encode($string){
+	static function base58_encode($string){
 		$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 		$base=strlen($alphabet);
 		// Type validation
@@ -47,7 +47,7 @@ class Utils{
 		}
 		return (string)$output;
 	}
-	function base58_decode($base58){
+	static function base58_decode($base58){
 		$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 		$base=strlen($alphabet);
 		// Type Validation
