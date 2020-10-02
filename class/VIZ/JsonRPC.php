@@ -191,6 +191,7 @@ class JsonRpc{
 			stream_context_set_option($context,'ssl','allow_self_signed',true);
 		}
 		if($sock=stream_socket_client($socket_connect,$errno,$errstr,2,STREAM_CLIENT_CONNECT,$context)){
+			stream_set_timeout($sock,$this->read_timeout);
 			fwrite($sock,$request,strlen($request));
 			$read_timeout=microtime(true)+$this->read_timeout;
 			while(!feof($sock)){
