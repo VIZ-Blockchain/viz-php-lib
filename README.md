@@ -40,18 +40,18 @@ Keys: init from hex, encode to wif, get public key from private, get encoded ver
 <?php
 include('./class/autoloader.php');
 
-$private_key = new VIZ\Key('b9f3c242e5872ac828cf2ef411f4c7b2a710bd9643544d735cc115ee939b3aae');
-print 'Private key from hex: ' . $private_key->hex . PHP_EOL;
-print 'Private key WIF: ' . $private_key->encode() . PHP_EOL;
-$data = 'Hello VIZ.World!';
-print 'Data for signing: ' . $data . PHP_EOL;
-$signature = $private_key->sign($data);
-print 'Signature: ' . $signature . PHP_EOL;
-$public_key = $private_key->get_public_key();
-if ($public_key) {
-    print 'Public key from private: ' . $public_key->encode() . PHP_EOL;
-    print 'Verify signature status for same data: ' . var_export($public_key->verify($data, $signature), true) . PHP_EOL;
-    print 'Verify signature status for other data: ' . var_export($public_key->verify('Bye VIZ.World!', $signature), true) . PHP_EOL;
+$private_key=new VIZ\Key('b9f3c242e5872ac828cf2ef411f4c7b2a710bd9643544d735cc115ee939b3aae');
+print 'Private key from hex: '.$private_key->hex.PHP_EOL;
+print 'Private key WIF: '.$private_key->encode().PHP_EOL;
+$data='Hello VIZ.World!';
+print 'Data for signing: '.$data.PHP_EOL;
+$signature=$private_key->sign($data);
+print 'Signature: '.$signature.PHP_EOL;
+$public_key=$private_key->get_public_key();
+if($public_key){
+	print 'Public key from private: '.$public_key->encode().PHP_EOL;
+	print 'Verify signature status for same data: '.var_export($public_key->verify($data,$signature),true).PHP_EOL;
+	print 'Verify signature status for other data: '.var_export($public_key->verify('Bye VIZ.World!',$signature),true).PHP_EOL;
 }
 ```
 
@@ -61,25 +61,25 @@ JsonRPC: init with endpoint, api method without parameters, change endpoint, get
 <?php
 include('./class/autoloader.php');
 
-$api = new VIZ\JsonRPC('https://node.viz.plus/');
-$dgp = $api->execute_method('get_dynamic_global_properties');
+$api=new VIZ\JsonRPC('https://node.viz.plus/');
+$dgp=$api->execute_method('get_dynamic_global_properties');
 var_dump($dgp);
 
-$api->endpoint = 'https://node.viz.media/';
+$api->endpoint='https://node.viz.media/';
 
-$account_login = 'on1x';
-$account = $api->execute_method('get_account', [$account_login, '']);
-if (false !== $account) {
-    print PHP_EOL . 'Account ' . $account_login . ' was founded:';
-    var_dump($account);
+$account_login='on1x';
+$account=$api->execute_method('get_account',[$account_login,'']);
+if(false!==$account){
+	print PHP_EOL.'Account '.$account_login.' was founded:';
+	var_dump($account);
 }
 
-$api->return_only_result = false;
+$api->return_only_result=false;
 
-$account_login = 'strange.viz';
-$account = $api->execute_method('get_account', [$account_login, '']);
-if (false === $account) {
-    print PHP_EOL . 'Account ' . $account_login . ' not founded';
+$account_login='strange.viz';
+$account=$api->execute_method('get_account',[$account_login,'']);
+if(false===$account){
+	print PHP_EOL.'Account '.$account_login.' not founded';
 }
 ```
 
@@ -88,14 +88,14 @@ Transaction: init with endpoint and private key in wif, build simple transaction
 ```php
 <?php
 include('./class/autoloader.php');
-$initiator = 'account';
-$initiator_private_key = '5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
+$initiator='account';
+$initiator_private_key='5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
 
-$tx = new VIZ\Transaction('https://node.viz.plus/', $initiator_private_key);
-$tx_data = $tx->award($initiator, 'committee', 1000, 0, 'testing viz-php-lib award operation');
+$tx=new VIZ\Transaction('https://node.viz.plus/',$initiator_private_key);
+$tx_data=$tx->award($initiator,'committee',1000,0,'testing viz-php-lib award operation');
 var_dump($tx_data);
 
-$tx_status = $tx->execute($tx_data['json']);
+$tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 ```
 
@@ -104,22 +104,22 @@ Init with endpoint and private key in wif, activate queue mode and add 2 operati
 ```php
 <?php
 include('./class/autoloader.php');
-$initiator = 'some.account';
-$initiator_private_key = '5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
+$initiator='some.account';
+$initiator_private_key='5Jaw8HtYbPDWRDhoH3eojmwquvsNZ8Z9HTWCsXJ2nAMrSxNPZ4F';
 
-$tx = new VIZ\Transaction('https://node.viz.plus/', $initiator_private_key);
+$tx=new VIZ\Transaction('https://node.viz.plus/',$initiator_private_key);
 $tx->start_queue();
-$tx->award($initiator, 'committee', 1000, 0, 'testing viz-php-lib multi-operations');
-$tx->award($initiator, 'committee', 2000, 0, 'testing viz-php-lib multi-operations 2');
-$tx_data = $tx->end_queue();
+$tx->award($initiator,'committee',1000,0,'testing viz-php-lib multi-operations');
+$tx->award($initiator,'committee',2000,0,'testing viz-php-lib multi-operations 2');
+$tx_data=$tx->end_queue();
 var_dump($tx_data);
 
 //turn api flag to return all result (including error state)
-$tx->api->return_only_result = false;
-$tx_status = $tx->execute($tx_data['json']);
+$tx->api->return_only_result=false;
+$tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 
-$tx2_data = $tx->add_signature($tx_data['json'], $tx_data['data'], '5HrmLC83FybxVgJ5jXQN5dUHxXZfHVc27sYpjdnoTviRqppPhPN');
+$tx2_data=$tx->add_signature($tx_data['json'],$tx_data['data'],'5HrmLC83FybxVgJ5jXQN5dUHxXZfHVc27sYpjdnoTviRqppPhPN');
 var_dump($tx2_data);
 ```
 
@@ -129,24 +129,24 @@ Create new private key, get public key from it, execute transaction with create_
 <?php
 include('./class/autoloader.php');
 
-$key = new VIZ\Key();
-$key_data = $key->gen('some seed, salt will be input', 'there');
-print 'Key seed with inputed salt: ' . $key_data[0] . PHP_EOL;
+$key=new VIZ\Key();
+$key_data=$key->gen('some seed, salt will be input','there');
+print 'Key seed with inputed salt: '.$key_data[0].PHP_EOL;
 
-$key_data = $key->gen('some seed, salt will be generated');
-print 'Key seed with random salt: ' . $key_data[0] . PHP_EOL;
+$key_data=$key->gen('some seed, salt will be generated');
+print 'Key seed with random salt: '.$key_data[0].PHP_EOL;
 
-print 'Private key (wif): ' . $key_data[1] . PHP_EOL;
-print 'Private key (wif) from object: ' . $key->encode() . PHP_EOL;
-print 'Public key (encoded): ' . $key_data[2] . PHP_EOL;
-print 'Public key (encoded) from object: ' . $key_data[3]->encode() . PHP_EOL;
+print 'Private key (wif): '.$key_data[1].PHP_EOL;
+print 'Private key (wif) from object: '.$key->encode().PHP_EOL;
+print 'Public key (encoded): '.$key_data[2].PHP_EOL;
+print 'Public key (encoded) from object: '.$key_data[3]->encode().PHP_EOL;
 
-$tx = new VIZ\Transaction('https://node.viz.plus/', '5JWm...');
+$tx=new VIZ\Transaction('https://node.viz.plus/','5JWm...');
 
-$tx_data = $tx->create_invite('on1x', '50.005 VIZ', $key_data[2]);
+$tx_data=$tx->create_invite('on1x','50.005 VIZ',$key_data[2]);
 var_dump($tx_data);
 
-$tx_status = $tx->execute($tx_data['json']);
+$tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 ```
 
@@ -156,21 +156,21 @@ Find shared key from two sides. Will be good for AES-256-CBC.
 <?php
 include('./class/autoloader.php');
 
-$private_key1 = new VIZ\Key();
+$private_key1=new VIZ\Key();
 $private_key1->gen();
-$public_key1 = $private_key1->get_public_key();
-print '$public_key1: ' . $public_key1->encode() . PHP_EOL;
+$public_key1=$private_key1->get_public_key();
+print '$public_key1: '.$public_key1->encode().PHP_EOL;
 
-$private_key2 = new VIZ\Key();
+$private_key2=new VIZ\Key();
 $private_key2->gen();
-$public_key2 = $private_key2->get_public_key();
-print '$public_key2: ' . $public_key2->encode() . PHP_EOL;
+$public_key2=$private_key2->get_public_key();
+print '$public_key2: '.$public_key2->encode().PHP_EOL;
 
-$shared_key1 = $private_key1->get_shared_key($public_key2->encode());
-print '$shared_key1: ' . $shared_key1->encode() . PHP_EOL;
+$shared_key1=$private_key1->get_shared_key($public_key2->encode());
+print '$shared_key1: '.$shared_key1->encode().PHP_EOL;
 
-$shared_key2 = $private_key2->get_shared_key($public_key1->encode());
-print '$shared_key2: ' . $shared_key2->encode() . PHP_EOL;
+$shared_key2=$private_key2->get_shared_key($public_key1->encode());
+print '$shared_key2: '.$shared_key2->encode().PHP_EOL;
 ```
 
 May VIZ be with you.
