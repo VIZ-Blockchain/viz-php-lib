@@ -16,5 +16,16 @@
       "homepage": "https://github.com/On1x"
     }
   ],
+  "autoload": {
+    "classmap": [
+      "class/"
+    ],
+    "psr-4": {
+      "VIZ\\": "class/VIZ",
+      "BN\\": "class/BN",
+      "BI\\": "class/BI",
+      "Elliptic\\": "class/Elliptic"
+    }
+  },
   "require": {}
 }
