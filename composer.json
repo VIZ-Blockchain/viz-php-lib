@@ -1,0 +1,31 @@
+{
+  "name": "viz-blockchain/viz-php-lib",
+  "type": "library",
+  "description": "Native PHP class for VIZ Keys, Transaction, JsonRPC",
+  "keywords": [
+    "VIZ",
+    "php",
+    "transaction",
+    "jsonRPC"
+  ],
+  "homepage": "https://github.com/VIZ-Blockchain/viz-php-lib",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Anatoly Piskunov",
+      "homepage": "https://github.com/On1x"
+    }
+  ],
+  "autoload": {
+    "classmap": [
+      "class/"
+    ],
+    "psr-4": {
+      "VIZ\\": "class/VIZ",
+      "BN\\": "class/BN",
+      "BI\\": "class/BI",
+      "Elliptic\\": "class/Elliptic"
+    }
+  },
+  "require": {}
+}
