@@ -43,15 +43,23 @@ include('./class/autoloader.php');
 $private_key=new VIZ\Key('b9f3c242e5872ac828cf2ef411f4c7b2a710bd9643544d735cc115ee939b3aae');
 print 'Private key from hex: '.$private_key->hex.PHP_EOL;
 print 'Private key WIF: '.$private_key->encode().PHP_EOL;
-$data='Hello VIZ.World!';
+$data='Hello VIZ.World! '.date('d.m.Y H:i:s');
 print 'Data for signing: '.$data.PHP_EOL;
 $signature=$private_key->sign($data);
-print 'Signature: '.$signature.PHP_EOL;
-$public_key=$private_key->get_public_key();
-if($public_key){
-	print 'Public key from private: '.$public_key->encode().PHP_EOL;
-	print 'Verify signature status for same data: '.var_export($public_key->verify($data,$signature),true).PHP_EOL;
-	print 'Verify signature status for other data: '.var_export($public_key->verify('Bye VIZ.World!',$signature),true).PHP_EOL;
+if(false===$signature){
+	print 'Canonical signature was not found, please try again.';
+}
+else{
+	print 'Signature: '.$signature.PHP_EOL;
+	$public_key=$private_key->get_public_key();
+	$recovered_public_key=$public_key->recover_public_key($data,$signature);
+	print 'Recovered public key from signature: '.$public_key->encode().PHP_EOL;
+
+	if($public_key){
+		print 'Public key from private: '.$public_key->encode().PHP_EOL;
+		print 'Verify signature status for same data: '.var_export($public_key->verify($data,$signature),true).PHP_EOL;
+		print 'Verify signature status for other data: '.var_export($public_key->verify('Bye VIZ.World!',$signature),true).PHP_EOL;
+	}
 }
 ```
 

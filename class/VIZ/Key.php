@@ -177,4 +177,20 @@ class Key{
 		}
 		return $public_key->verify($data_hash,$signature);
 	}
+	function recover_public_key($data,$signature){
+		$data_hash=hash('sha256',$data);
+		$signature_recovery=hexdec(substr($signature,0,2)) - 27 - 4;
+		$signature_recovery;
+		$q=null;
+		try{
+			$q=$this->ec->recoverPubKey($data_hash,$signature,$signature_recovery,'hex');
+		}
+		catch(\Exception $e){
+			return false;
+		}
+		$ec_key=$this->ec->keyFromPublic($q);
+		$ec_public=$ec_key->getPublic(true,'hex');
+		$public_key=new Key($ec_public,false);
+		return $public_key->encode();
+	}
 }
