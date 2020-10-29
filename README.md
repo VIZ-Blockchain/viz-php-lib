@@ -78,8 +78,8 @@ $api->return_only_result=false;
 
 $account_login='strange.viz';
 $account=$api->execute_method('get_account',[$account_login,'']);
-if(false===$account){
-	print PHP_EOL.'Account '.$account_login.' not founded';
+if(isset($account['error'])){
+	print PHP_EOL.$account['error']['message'];
 }
 ```
 
