@@ -1,6 +1,8 @@
 <?php
 namespace VIZ;
 
+use DateTime;
+use DateTimeZone;
 use VIZ\Utils;
 use Elliptic\EC;
 
@@ -192,5 +194,19 @@ class Key{
 		$ec_public=$ec_key->getPublic(true,'hex');
 		$public_key=new Key($ec_public,false);
 		return $public_key->encode();
+	}
+	function auth($account,$domain,$action='auth',$authority='regular'){
+		$nonce=1;
+		$time=time()-(new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime());
+		$data=false;
+		$signature=false;
+		while(!$signature){
+			$data=$domain.':'.$action.':'.$account.':'.$authority.':'.$time.':'.$nonce;
+			$signature=$this->sign($data);
+			if(false===$signature){
+				$nonce++;
+			}
+		}
+		return [$data,$signature];
 	}
 }

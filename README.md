@@ -181,4 +181,21 @@ $shared_key2=$private_key2->get_shared_key($public_key1->encode());
 print '$shared_key2: '.$shared_key2->encode().PHP_EOL;
 ```
 
+Generate data and signature for passwordless authentication and check it for domain auth action with active authority.
+
+```
+<?php
+include('./class/autoloader.php');
+$account='invite';
+$private_key=new VIZ\Key('5KcfoRuDfkhrLCxVcE9x51J6KN9aM9fpb78tLrvvFckxVV6FyFW');
+print 'Private key WIF: '.$private_key->encode().PHP_EOL;
+list($data,$signature)=$private_key->auth($account,'domain.com','auth','active');
+print 'Data for auth: '.$data.PHP_EOL;
+print 'Signature: '.$signature.PHP_EOL;
+
+$viz_auth=new VIZ\Auth('https://node.viz.plus/','domain.com','auth','active');
+$auth_status=$viz_auth->check($data,$signature);
+print 'Passwordless authentication: '.var_export($auth_status,true);
+```
+
 May VIZ be with you.
