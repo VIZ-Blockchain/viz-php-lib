@@ -235,7 +235,32 @@ class Transaction{
 		$raw.=$this->encode_asset($vesting_shares);
 		return [$json,$raw];
 	}
-
+	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
+		$json='["custom",{';
+		$json.='"required_active_auths":[';
+		$accounts_list=[];
+		foreach($required_active_auths as $account){
+			$accounts_list[]='"'.$account.'"';
+		}
+		$json.=implode(',',$accounts_list);
+		$json.=']';
+		$json.=',"required_regular_auths":[';
+		$accounts_list=[];
+		foreach($required_regular_auths as $account){
+			$accounts_list[]='"'.$account.'"';
+		}
+		$json.=implode(',',$accounts_list);
+		$json.=']';
+		$json.=',"id":"'.$id.'"';
+		$json.=',"json":"'.addslashes($json_str).'"';
+		$json.='}]';
+		$raw='0a';//operation number is 10
+		$raw.=$this->encode_array($required_active_auths,'string');
+		$raw.=$this->encode_array($required_regular_auths,'string');
+		$raw.=$this->encode_string($id);
+		$raw.=$this->encode_string($json_str);
+		return [$json,$raw];
+	}
 	function build_witness_update($owner,$url,$block_signing_key){
 		$json='["witness_update",{';
 		$json.='"owner":"'.$owner.'"';

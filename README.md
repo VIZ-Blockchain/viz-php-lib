@@ -183,7 +183,7 @@ print '$shared_key2: '.$shared_key2->encode().PHP_EOL;
 
 Generate data and signature for passwordless authentication and check it for domain auth action with active authority.
 
-```
+```php
 <?php
 include('./class/autoloader.php');
 $account='invite';
@@ -196,6 +196,22 @@ print 'Signature: '.$signature.PHP_EOL;
 $viz_auth=new VIZ\Auth('https://node.viz.plus/','domain.com','auth','active');
 $auth_status=$viz_auth->check($data,$signature);
 print 'Passwordless authentication: '.var_export($auth_status,true);
+```
+
+Make transaction with custom operation.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';//regular
+$tx=new VIZ\Transaction('https://node.viz.plus/',$private_key);
+$tx_data=$tx->custom([],[$account],'test','{"msg":"testing viz-php-lib custom operation"}');
+var_dump($tx_data);
+
+$tx->api->return_only_result=false;
+$tx_status=$tx->execute($tx_data['json']);
+var_dump($tx_status);
 ```
 
 May VIZ be with you.
