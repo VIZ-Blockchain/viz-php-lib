@@ -27,7 +27,7 @@ class Key{
 			}
 		}
 		else{
-			$this->import_hex('0000000000000000000000000000000000000000000000000000000000000000');
+			$this->import_hex('000000000000000000000000000000000000000000000000000000000000000000');
 		}
 	}
 	function get_shared_key($public_key_encoded){
@@ -40,9 +40,139 @@ class Key{
 		$ec_private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
 
 		$ec_shared_point=$ec_private_key->derive($ec_public_key->pub);
-		$shared_key=new Key($ec_shared_point->toString(16),false);
+		return hash('sha512',hex2bin($ec_shared_point->toString(16)),false);
+	}
+	function encode_memo($public_key_encoded,$memo){
+		if(!$this->private){
+			return false;
+		}
+		$shared_key=hex2bin($this->get_shared_key($public_key_encoded));
 
-		return $shared_key;
+		$current_public_key=$this->get_public_key();
+		$from=$current_public_key->hex;
+
+		$public_key=new Key($public_key_encoded,false);
+		$to=$public_key->hex;
+
+		//js compability encrypted_memo https://github.com/VIZ-Blockchain/viz-js-lib/blob/master/src/auth/serializer/src/operations.js#L83
+		$result='';
+		$result.=hex2bin($from);
+		$result.=hex2bin($to);
+
+		$nonce_bin=random_bytes(8);
+		$encryption_key=hash('sha512',$nonce_bin.$shared_key,true);
+		$checksum=hash('sha256',$encryption_key,true);
+		$checksum_bin=substr($checksum,0,4);
+
+		$result.=$nonce_bin;
+		$result.=$checksum_bin;
+
+		$key=substr($encryption_key,0,32);
+		$iv=substr($encryption_key,32,16);
+
+		$memo_vlq=Utils::vlq_create($memo);
+
+		$encrypted=Utils::aes_256_cbc_encrypt($memo_vlq.$memo,$key,$iv);
+		if(false===$encrypted){
+			return false;
+		}
+		else{
+			$encrypted_bin=hex2bin($encrypted);
+			$encrypted_vlq=Utils::vlq_create($encrypted_bin);
+			$result.=$encrypted_vlq.$encrypted_bin;
+		}
+		$crypted=Utils::base58_encode($result);
+		return $crypted;
+	}
+	function decode_memo($memo){
+		$js_data=Utils::base58_decode($memo);
+		if(false===$js_data){
+			return false;
+		}
+		$offset=0;
+		$len=33;
+		$from_bin=substr($js_data,$offset,$len);
+		$from_hex=bin2hex($from_bin);
+		$from_key=new Key($from_hex,false);
+		$from=$from_key->encode();
+		$offset+=$len;
+
+		$to_bin=substr($js_data,$offset,$len);
+		$to_hex=bin2hex($to_bin);
+		$to_key=new Key($to_hex,false);
+		$to=$to_key->encode();
+		$offset+=$len;
+
+		$shared_key=false;
+		$current_public_key=$this->get_public_key();
+		if($current_public_key->encode()==$from){
+			$shared_key=hex2bin($this->get_shared_key($to));
+		}
+		else{
+			$shared_key=hex2bin($this->get_shared_key($from));
+		}
+
+		$len=8;
+		$nonce_bin=substr($js_data,$offset,$len);
+		$nonce=unpack('Q',$nonce_bin)[1];//uint64
+		$nonce_hex=bin2hex($nonce_bin);
+		$offset+=$len;
+
+		$len=4;
+		$check_bin=substr($js_data,$offset,$len);
+		$check=unpack('L',$check_bin)[1];//uint32
+		$check_hex=bin2hex($check_bin);
+		$offset+=$len;
+
+		$encrypted_bin=substr($js_data,$offset);
+
+		$data_length=strlen($encrypted_bin);
+		$vstring_length_bytes=1;
+		$vstring_data_length=$data_length-$vstring_length_bytes;
+		$devider=128;
+		$vstring_128=$vstring_data_length/$devider;
+		while($vstring_128>=1){
+			$vstring_length_bytes++;
+			$devider=$devider*128;
+			$vstring_data_length=$data_length-$vstring_length_bytes;
+			$vstring_128=$vstring_data_length/$devider;
+		}
+		$encrypted_bin=substr($encrypted_bin,$vstring_length_bytes);
+
+		$encrypted_hex=bin2hex($encrypted_bin);
+
+		$encryption_key=hash('sha512',$nonce_bin.$shared_key,true);
+		$key=substr($encryption_key,0,32);
+		$iv=substr($encryption_key,32,16);
+
+		$checksum=hash('sha256',$encryption_key,true);
+		$checksum=substr($checksum,0,4);
+		$checksum=unpack('L',$checksum)[1];
+
+		if($checksum==$check){
+			$decoded=Utils::aes_256_cbc_decrypt($encrypted_bin,$key,$iv);
+			if(false===$decoded){
+				return false;
+			}
+			else{
+				$data_length=strlen($decoded);
+				$vstring_length_bytes=1;
+				$vstring_data_length=$data_length-$vstring_length_bytes;
+				$devider=128;
+				$vstring_128=$vstring_data_length/$devider;
+				while($vstring_128>=1){
+					$vstring_length_bytes++;
+					$devider=$devider*128;
+					$vstring_data_length=$data_length-$vstring_length_bytes;
+					$vstring_128=$vstring_data_length/$devider;
+				}
+				$decoded=substr($decoded,$vstring_length_bytes);
+				return $decoded;
+			}
+		}
+		else{
+			return false;
+		}
 	}
 	function random_str($length,$keyspace='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:#@^&*()!?.,;"[]{}'){
 		$pieces=[];

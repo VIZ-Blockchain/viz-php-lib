@@ -158,7 +158,7 @@ $tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 ```
 
-Find shared key from two sides. Will be good for AES-256-CBC.
+Find shared key from two sides. Simple string encrypt and decrypt with AES-256-CBC. Encode and decode memo with `viz-js-lib` compability structure for encrypted memo.
 
 ```php
 <?php
@@ -175,10 +175,30 @@ $public_key2=$private_key2->get_public_key();
 print '$public_key2: '.$public_key2->encode().PHP_EOL;
 
 $shared_key1=$private_key1->get_shared_key($public_key2->encode());
-print '$shared_key1: '.$shared_key1->encode().PHP_EOL;
+print '$shared_key1: '.$shared_key1.PHP_EOL;
 
 $shared_key2=$private_key2->get_shared_key($public_key1->encode());
-print '$shared_key2: '.$shared_key2->encode().PHP_EOL;
+print '$shared_key2: '.$shared_key2.PHP_EOL;
+
+$string='Hello VIZ World! 🤘';
+
+$encrypted=VIZ\Utils::aes_256_cbc_encrypt($string,hex2bin($shared_key1));
+$decrypted=VIZ\Utils::aes_256_cbc_decrypt(hex2bin($encrypted['data']),hex2bin($shared_key2),$encrypted['iv']);
+
+print PHP_EOL.'Simple encrypted AES-256-cbc with $shared_key1: '.var_export($encrypted,true).PHP_EOL;
+print PHP_EOL.'Simple decrypted AES-256-cbc with $shared_key2: '.var_export($decrypted,true).PHP_EOL;
+
+$crypted=$private_key1->encode_memo($public_key2->encode(),$string);
+print PHP_EOL.'Crypted memo by AES-256-cbc with shared key between private_key1 and public_key2: '.var_export($crypted,true).PHP_EOL;
+
+$result=$private_key2->decode_memo($crypted);
+print PHP_EOL.'Decrypted memo by AES-256-cbc with shared key between private_key2 and public_key1: '.var_export($result,true).PHP_EOL;
+
+$result=$private_key1->decode_memo($crypted);
+print PHP_EOL.'Decrypted memo by AES-256-cbc with shared key between private_key1 and public_key2: '.var_export($result,true).PHP_EOL;
+
+$result=$private_key3->decode_memo($crypted);
+print PHP_EOL.'Decrypted memo by AES-256-cbc with shared key between private_key3 and public_key1: '.var_export($result,true).PHP_EOL;
 ```
 
 Generate data and signature for passwordless authentication and check it for domain auth action with active authority.

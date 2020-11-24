@@ -88,4 +88,97 @@ class Utils{
 		}
 		return $output;
 	}
+	static function aes_256_cbc_encrypt($data_bin,$key_bin,$iv=false){
+		$preset_iv=true;
+		if(false===$iv){
+			$iv=bin2hex(random_bytes(openssl_cipher_iv_length('AES-256-CBC')));
+			$preset_iv=false;
+		}
+		$encrypt=openssl_encrypt($data_bin,'AES-256-CBC',$key_bin,OPENSSL_RAW_DATA,$iv);
+		if($encrypted=bin2hex($encrypt)){
+			if($preset_iv){
+				return $encrypted;
+			}
+			else{
+				return [
+					'iv'=>$iv,
+					'data'=>$encrypted,
+				];
+			}
+		}
+		else{
+			return false;
+		}
+	}
+	static function aes_256_cbc_decrypt($data_bin,$key_bin,$iv){
+		if($decrypted=openssl_decrypt($data_bin,'AES-256-CBC',$key_bin,OPENSSL_RAW_DATA,$iv)){
+			return $decrypted;
+		}
+		else{
+			return false;
+		}
+	}
+	//https://en.wikipedia.org/wiki/Variable-length_quantity
+	static function vlq_create($data){
+		$data_length=strlen($data);
+		$digits=[];
+		$bits=7;
+		$c_bit=1<<7;
+		do{
+			$digit=($data_length%$c_bit);
+			$data_length>>=$bits;
+			$continue=($data_length>0);
+			if($continue){
+				$digit+=$c_bit;
+			}
+			$digits[]=$digit;
+		}while($continue);
+		$vlq='';
+		foreach($digits as $digit){
+			$vlq.=chr($digit);
+		}
+		return $vlq;
+	}
+	static function vlq_extract($data,$as_bytes=false){
+		$digits=[];
+		$bits=7;
+		$num=0;
+		do{
+			$byte=$data[$num];
+			$digit=ord($byte);
+			if($as_bytes){
+				$digits[]=$byte;
+			}
+			else{
+				$digits[]=$digit;
+			}
+			$digit>>=$bits;
+			$continue=($digit>0);
+			if($continue){
+				$num++;
+			}
+		}while($continue);
+		return $digits;
+	}
+	static function vlq_calculate($digits,$as_bytes=false){
+		$result=[];
+		$current=0;
+		$bits=7;
+		$c_bit=1<<7;
+		$shift=0;
+		foreach($digits as $digit){
+			if($as_bytes){
+				$digit=ord($digit);
+			}
+			$current+=(($digit%$c_bit)<<$shift);
+			if($digit<$c_bit){
+				$result[]=$current;
+				$current=0;
+				$shift=0;
+			} else {
+				$shift += $bits;
+			}
+		}
+		return $result[0];
+	}
 }
