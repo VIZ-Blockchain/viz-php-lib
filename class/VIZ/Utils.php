@@ -91,7 +91,7 @@ class Utils{
 	static function aes_256_cbc_encrypt($data_bin,$key_bin,$iv=false){
 		$preset_iv=true;
 		if(false===$iv){
-			$iv=bin2hex(random_bytes(openssl_cipher_iv_length('AES-256-CBC')));
+			$iv=random_bytes(openssl_cipher_iv_length('AES-256-CBC'));
 			$preset_iv=false;
 		}
 		$encrypt=openssl_encrypt($data_bin,'AES-256-CBC',$key_bin,OPENSSL_RAW_DATA,$iv);
@@ -101,7 +101,7 @@ class Utils{
 			}
 			else{
 				return [
-					'iv'=>$iv,
+					'iv'=>bin2hex($iv),
 					'data'=>$encrypted,
 				];
 			}

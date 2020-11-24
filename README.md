@@ -183,7 +183,7 @@ print '$shared_key2: '.$shared_key2.PHP_EOL;
 $string='Hello VIZ World! 🤘';
 
 $encrypted=VIZ\Utils::aes_256_cbc_encrypt($string,hex2bin($shared_key1));
-$decrypted=VIZ\Utils::aes_256_cbc_decrypt(hex2bin($encrypted['data']),hex2bin($shared_key2),$encrypted['iv']);
+$decrypted=VIZ\Utils::aes_256_cbc_decrypt(hex2bin($encrypted['data']),hex2bin($shared_key2),hex2bin($encrypted['iv']));
 
 print PHP_EOL.'Simple encrypted AES-256-cbc with $shared_key1: '.var_export($encrypted,true).PHP_EOL;
 print PHP_EOL.'Simple decrypted AES-256-cbc with $shared_key2: '.var_export($decrypted,true).PHP_EOL;
