@@ -2,13 +2,13 @@
 namespace VIZ;
 
 use BI\BigInteger;
+use kornrunner\Keccak;
 
 class Utils{
 	// Base58 encoding/decoding functions - all credits go to https://github.com/stephen-hill/base58php
 	// The MIT License (MIT) Copyright (c) 2014 Stephen Hill <stephen@gatekiller.co.uk>
 	// Adapted for BI\BigInteger wrapper
-	static function base58_encode($string){
-		$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+	static function base58_encode($string,$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'){
 		$base=strlen($alphabet);
 		// Type validation
 		if(is_string($string) === false){
@@ -47,8 +47,7 @@ class Utils{
 		}
 		return (string)$output;
 	}
-	static function base58_decode($base58){
-		$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+	static function base58_decode($base58,$alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'){
 		$base=strlen($alphabet);
 		// Type Validation
 		if(is_string($base58) === false){
@@ -180,5 +179,34 @@ class Utils{
 			}
 		}
 		return $result[0];
+	}
+	static function privkey_hex_to_btc_wif($hex){
+		$privkey_hex='80'.$hex;
+		$checksum=substr(hash('sha256',hash('sha256',hex2bin($privkey_hex),true),true),0,4);
+		return Utils::base58_encode(hex2bin($privkey_hex).$checksum);
+	}
+	static function privkey_hex_to_ltc_wif($hex){
+		$privkey_hex='b0'.$hex;
+		$checksum=substr(hash('sha256',hash('sha256',hex2bin($privkey_hex),true),true),0,4);
+		return Utils::base58_encode(hex2bin($privkey_hex).$checksum);
+	}
+	static function full_pubkey_hex_to_btc_address($hex,$network_id="\x00"){
+		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
+		$checksum=substr(hash('sha256',hash('sha256',$pubkey_hash,true),true),0,4);
+		return Utils::base58_encode($pubkey_hash.$checksum);
+	}
+	static function full_pubkey_hex_to_ltc_address($hex,$network_id="\x30"){
+		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
+		$checksum=substr(hash('sha256',hash('sha256',$pubkey_hash,true),true),0,4);
+		return Utils::base58_encode($pubkey_hash.$checksum);
+	}
+	static function full_pubkey_hex_to_eth_address($hex){
+		return '0x'.substr(Keccak::hash(substr(hex2bin($hex),1),256),-40);
+	}
+	static function full_pubkey_hex_to_trx_address($hex){
+		$prefix='41';
+		$pubkey_hash=$prefix.substr(Keccak::hash(substr(hex2bin($hex),1),256),-40);
+		$checksum=substr(hash('sha256',hash('sha256',hex2bin($pubkey_hash),true),true),0,4);
+		return Utils::base58_encode(hex2bin($pubkey_hash).$checksum);
 	}
 }

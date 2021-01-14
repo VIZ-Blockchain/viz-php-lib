@@ -268,10 +268,16 @@ class Key{
 	function get_public_key(){
 		$copy=new Key($this->bin);
 		$private_key=$copy->ec->keyFromPrivate($copy->hex,'hex',true);
+		//compact/compressed
 		$copy->hex=$private_key->getPublic(true,'hex');
 		$copy->bin=hex2bin($this->hex);
 		$copy->private=false;
 		return $copy;
+	}
+	function get_full_public_key_hex(){
+		$private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
+		//full representation (uncompressed: x04 + x + y)
+		return $private_key->getPublic(false,'hex');
 	}
 	function encode($prefix='VIZ'){
 		if($this->private){//return wif

@@ -8,11 +8,12 @@ Native PHP class for VIZ Keys, Transaction, JsonRPC
 
 ## Features
 - JsonRPC — native socket usage (all API methods, hostname cache, ssl flag, full result flag)
-- Keys — private (sign), public (verify), shared, encoded keys support (wif, public encoded)
+- Keys — private (sign), public (verify), shared, encoded keys support (wif, public encoded, compressed/uncompressed public key in hex representation)
 - Transaction — easy workflow, multi-signature support, multi-operations support, execute by JsonRPC, support 5 most usable operations: transfer, transfer_to_vesting, withdraw_vesting, award, create_invite (other operations will be implemented later)
 - Classes support PSR-4
 - Contains modificated classes for best fit to VIZ Blockchain (all-in-one)
 - Native code without additional installations (sry composer, but we need other changes in third-party classes)
+- Utils for keys compatibility with Ethereum, Bitcoin addresses
 - MIT License
 
 ## Dependencies
@@ -29,6 +30,7 @@ Thanks to third-party class developers:
 - https://github.com/simplito/bigint-wrapper-php
 - https://github.com/simplito/bn-php
 - https://github.com/simplito/elliptic-php
+- https://github.com/kornrunner/php-keccak
 
 ## Examples
 
