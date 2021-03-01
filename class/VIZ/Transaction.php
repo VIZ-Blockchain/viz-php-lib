@@ -395,6 +395,18 @@ class Transaction{
 		$raw.=$this->encode_asset($vesting_shares);
 		return [$json,$raw];
 	}
+	function build_delegate_vesting_shares($delegator,$delegatee,$vesting_shares){
+		$json='["delegate_vesting_shares",{';
+		$json.='"delegator":"'.$delegator.'"';
+		$json.=',"delegatee":"'.$delegatee.'"';
+		$json.=',"vesting_shares":"'.$vesting_shares.'"';
+		$json.='}]';
+		$raw='13';//operation number is 19
+		$raw.=$this->encode_string($delegator);
+		$raw.=$this->encode_string($delegatee);
+		$raw.=$this->encode_asset($vesting_shares);
+		return [$json,$raw];
+	}
 	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
 		$json='["custom",{';
 		$json.='"required_active_auths":[';
