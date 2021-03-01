@@ -163,6 +163,166 @@ class Transaction{
 			return false;
 		}
 	}
+	function build_account_create($fee,$delegation,$creator,$new_account_name,$master,$active,$regular,$memo_key='VIZ1111111111111111111111111111111114T1Anm',$json_metadata='',$referrer=''){
+		$json='["account_create",{';
+		$json.='"fee":"'.$fee.'"';
+		$json.=',"delegation":"'.$delegation.'"';
+		$json.=',"creator":"'.$creator.'"';
+		$json.=',"new_account_name":"'.$new_account_name.'"';
+		$json.=',"master":{';
+		$master_str_arr=[];
+		$master_arr=[];
+		if(is_string($master)){
+			$master_public_key=$master;
+			$master=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$master_public_key,1]],
+			];
+		}
+		if(is_array($master)){
+			if(!isset($master['weight_threshold'])){
+				$master['weight_threshold']=1;
+			}
+			$master_arr['weight_threshold']=$master['weight_threshold'];
+			$master_arr['account_auths']=[];
+			foreach($master['account_auths'] as $accounts_auth_arr){
+				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$master_arr['key_auths']=[];
+			foreach($master['key_auths'] as $key_auths_arr){
+				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($master_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$master_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$master_str_arr);
+		}
+		$json.='}';
+		$json.=',"active":{';
+		$active_str_arr=[];
+		$active_arr=[];
+		if(is_string($active)){
+			$active_public_key=$active;
+			$active=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$active_public_key,1]],
+			];
+		}
+		if(!isset($active['weight_threshold'])){
+			$active['weight_threshold']=1;
+		}
+		if(is_array($active)){
+			$active_arr['weight_threshold']=$active['weight_threshold'];
+			$active_arr['account_auths']=[];
+			foreach($active['account_auths'] as $accounts_auth_arr){
+				$active_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$active_arr['key_auths']=[];
+			foreach($active['key_auths'] as $key_auths_arr){
+				$active_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($active_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$active_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$active_str_arr);
+		}
+		$json.='}';
+		$json.=',"regular":{';
+		$regular_str_arr=[];
+		$regular_arr=[];
+		if(is_string($regular)){
+			$regular_public_key=$regular;
+			$regular=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$regular_public_key,1]],
+			];
+		}
+		if(!isset($regular['weight_threshold'])){
+			$regular['weight_threshold']=1;
+		}
+		if(is_array($regular)){
+			$regular_arr['weight_threshold']=$regular['weight_threshold'];
+			$regular_arr['account_auths']=[];
+			foreach($regular['account_auths'] as $accounts_auth_arr){
+				$regular_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$regular_arr['key_auths']=[];
+			foreach($regular['key_auths'] as $key_auths_arr){
+				$regular_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($regular_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$regular_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$regular_str_arr);
+		}
+		$json.='}';
+		$json.=',"memo_key":"'.$memo_key.'"';
+		$json.=',"json_metadata":"'.$json_metadata.'"';
+		$json.=',"referrer":"'.$referrer.'"';
+		$json.='}]';
+		$raw='14';//operation number is 20
+		$raw.=$this->encode_asset($fee);
+		$raw.=$this->encode_asset($delegation);
+		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_string($new_account_name);
+
+		$raw.=$this->encode_uint32($master['weight_threshold']);
+		$raw.=$this->encode_array($master['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($master['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_uint32($active['weight_threshold']);
+		$raw.=$this->encode_array($active['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($active['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_uint32($regular['weight_threshold']);
+		$raw.=$this->encode_array($regular['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($regular['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_public_key($memo_key);
+		$raw.=$this->encode_string($json_metadata);
+		$raw.=$this->encode_string($referrer);
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
 	function build_award($initiator,$receiver,$energy,$custom_sequence=0,$memo='',$beneficiaries=[]){
 		$json='["award",{';
 		$json.='"initiator":"'.$initiator.'"';

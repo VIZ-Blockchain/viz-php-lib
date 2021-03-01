@@ -236,4 +236,48 @@ $tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 ```
 
+Make transaction with account create operation.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';//regular
+$tx=new VIZ\Transaction('https://api.viz.world/',$private_key);
+
+$fee='0.000 VIZ';
+$delegation='10.000000 SHARES';
+
+//you can set any authority as simple string with encoded public key
+$master='VIZ7RXhpaw8SbedSp84EqMGGzeBZgAPLEn7D6kQhJu8bMMvUKtuxk';//5JRd4Toy8cmDr15qEtZieqAgbg3qQMU6n8cPC1Las2hBah46tr1
+$active='VIZ7H8S8rHkKQkX8bSUpDtBAwy8tTphq2NH7ZRv1dcCvk1Cjz38nK';//5JvgdGsA5M8rZ9oY2p7qcKkexG1kWqN2jQcQ6afEPCqQXrKTsbS
+
+//or make full authority struct (if you need more flexibility)
+$regular=[
+	//'weight_threshold'=>1,//can be empty if weight_threshold=1
+	'account_auths'=>[
+		['on1x',1]
+	],
+	'key_auths'=>[
+		['VIZ5bGNeJPjoDdZTEK3LSMUfP21gcBH34AdMPHpvQymuYMk2YMbsB',1],//5HuHKQhiiAAAp7zMCgRpCCyv8hramEmzAzDUagrhMkTWDhyVtK6
+		['VIZ5jWA94PYBanGSPhTyWrwvT8RAJcnB7onXGvK5DnzbxB6874yap',1]//5KESchwZvs67C4Xz5SQQ1ea4N9rZR67NEvi6yemWpSYoKo9eTrM
+	]
+];
+//you need manually check public keys sorting in key_auths or node will refuse the transaction
+
+$memo_key='VIZ1111111111111111111111111111111114T1Anm';//can be empty key
+
+$json_metadata='';
+$referrer='';
+
+$new_account_name='test-lib';
+
+$tx_data=$tx->account_create($fee,$delegation,$account,$new_account_name,$master,$actove,$regular,$memo_key,$json_metadata,$referrer);
+var_dump($tx_data);
+
+$tx->api->return_only_result=false;
+$tx_status=$tx->execute($tx_data['json']);
+var_dump($tx_status);
+```
+
 May VIZ be with you.
