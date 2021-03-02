@@ -860,6 +860,46 @@ class Transaction{
 		$raw.=$this->encode_asset($vesting_shares);
 		return [$json,$raw];
 	}
+	function build_committee_worker_create_request($creator,$url,$worker,$required_amount_min,$required_amount_max,$duration){
+		$json='["committee_worker_create_request",{';
+		$json.='"creator":"'.$creator.'"';
+		$json.=',"url":"'.url.'"';
+		$json.=',"worker":"'.$worker.'"';
+		$json.=',"required_amount_min":"'.$required_amount_min.'"';
+		$json.=',"required_amount_max":"'.$required_amount_max.'"';
+		$json.=',"duration":'.$duration.'';
+		$json.='}]';
+		$raw='23';//operation number is 35
+		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_string($url);
+		$raw.=$this->encode_string($worker);
+		$raw.=$this->encode_asset($required_amount_min);
+		$raw.=$this->encode_asset($required_amount_max);
+		$raw.=$this->encode_uint32($duration);
+		return [$json,$raw];
+	}
+	function build_committee_worker_cancel_request($creator,$request_id){
+		$json='["committee_worker_cancel_request",{';
+		$json.='"creator":"'.$creator.'"';
+		$json.=',"request_id":'.request_id.'';
+		$json.='}]';
+		$raw='24';//operation number is 36
+		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_uint32($request_id);
+		return [$json,$raw];
+	}
+	function build_committee_vote_request($creator,$request_id,$vote_percent){
+		$json='["committee_vote_request",{';
+		$json.='"creator":"'.$creator.'"';
+		$json.=',"request_id":'.request_id.'';
+		$json.=',"vote_percent":'.$vote_percent.'';
+		$json.='}]';
+		$raw='25';//operation number is 37
+		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_uint32($request_id);
+		$raw.=$this->encode_int16($vote_percent);
+		return [$json,$raw];
+	}
 	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
 		$json='["custom",{';
 		$json.='"required_active_auths":[';
