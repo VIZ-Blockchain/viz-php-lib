@@ -734,6 +734,84 @@ class Transaction{
 		$raw.=$this->encode_public_key($invite_key);
 		return [$json,$raw];
 	}
+	function build_escrow_transfer($from,$to,$token_amount,$escrow_id,$agent,$fee,$json_metadata,$ratification_deadline,$escrow_expiration){
+		$json='["escrow_transfer",{';
+		$json.='"from":"'.$from.'"';
+		$json.=',"to":"'.$to.'"';
+		$json.=',"token_amount":"'.$token_amount.'"';
+		$json.=',"escrow_id":'.$escrow_id.'';
+		$json.=',"agent":"'.$agent.'"';
+		$json.=',"fee":"'.$fee.'"';
+		$json.=',"json_metadata":"'.$json_metadata.'"';
+		$json.=',"ratification_deadline":"'.$ratification_deadline.'"';
+		$json.=',"escrow_expiration":"'.$escrow_expiration.'"';
+		$json.='}]';
+		$raw='0F';//operation number is 15
+		$raw.=$this->encode_string($from);
+		$raw.=$this->encode_string($to);
+		$raw.=$this->encode_asset($token_amount);
+		$raw.=$this->encode_uint32($escrow_id);
+		$raw.=$this->encode_string($agent);
+		$raw.=$this->encode_asset($fee);
+		$raw.=$this->encode_string($json_metadata);
+		$raw.=$this->encode_timestamp($ratification_deadline);
+		$raw.=$this->encode_timestamp($escrow_expiration);
+		return [$json,$raw];
+	}
+	function build_escrow_dispute($from,$to,$agent,$who,$escrow_id){
+		$json='["escrow_dispute",{';
+		$json.='"from":"'.$from.'"';
+		$json.=',"to":"'.$to.'"';
+		$json.=',"agent":"'.$agent.'"';
+		$json.=',"who":"'.$who.'"';
+		$json.=',"escrow_id":'.$escrow_id.'';
+		$json.='}]';
+		$raw='10';//operation number is 16
+		$raw.=$this->encode_string($from);
+		$raw.=$this->encode_string($to);
+		$raw.=$this->encode_string($agent);
+		$raw.=$this->encode_string($who);
+		$raw.=$this->encode_uint32($escrow_id);
+		return [$json,$raw];
+	}
+	function build_escrow_release($from,$to,$agent,$who,$receiver,$escrow_id,$token_amount){
+		$json='["escrow_release",{';
+		$json.='"from":"'.$from.'"';
+		$json.=',"to":"'.$to.'"';
+		$json.=',"agent":"'.$agent.'"';
+		$json.=',"who":"'.$who.'"';
+		$json.=',"receiver":"'.$receiver.'"';
+		$json.=',"escrow_id":'.$escrow_id.'';
+		$json.=',"token_amount":"'.$token_amount.'"';
+		$json.='}]';
+		$raw='11';//operation number is 17
+		$raw.=$this->encode_string($from);
+		$raw.=$this->encode_string($to);
+		$raw.=$this->encode_string($agent);
+		$raw.=$this->encode_string($who);
+		$raw.=$this->encode_string($receiver);
+		$raw.=$this->encode_uint32($escrow_id);
+		$raw.=$this->encode_asset($token_amount);
+		return [$json,$raw];
+	}
+	function build_escrow_approve($from,$to,$agent,$who,$escrow_id,$approve){
+		$json='["escrow_approve",{';
+		$json.='"from":"'.$from.'"';
+		$json.=',"to":"'.$to.'"';
+		$json.=',"agent":"'.$agent.'"';
+		$json.=',"who":"'.$who.'"';
+		$json.=',"escrow_id":'.$escrow_id.'';
+		$json.=',"approve":'.($approve?'true':'false').'';
+		$json.='}]';
+		$raw='12';//operation number is 18
+		$raw.=$this->encode_string($from);
+		$raw.=$this->encode_string($to);
+		$raw.=$this->encode_string($agent);
+		$raw.=$this->encode_string($who);
+		$raw.=$this->encode_uint32($escrow_id);
+		$raw.=$this->encode_bool($approve);
+		return [$json,$raw];
+	}
 	function build_transfer($from,$to,$amount,$memo){
 		$json='["transfer",{';
 		$json.='"from":"'.$from.'"';
