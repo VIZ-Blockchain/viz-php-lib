@@ -898,6 +898,123 @@ class Transaction{
 		$raw.=$this->encode_public_key($block_signing_key);
 		return [$json,$raw];
 	}
+	function build_proposal_create($author,$title,$memo,$expiration_time,$proposed_operations=[],$review_period_time=false){
+		$json='["proposal_create",{';
+		$json.='"author":"'.$author.'"';
+		$json.=',"title":"'.$title.'"';
+		$json.=',"memo":"'.$memo.'"';
+		$json.=',"expiration_time":"'.$expiration_time.'"';
+		$proposed_operations_json_arr=[];
+		$proposed_operations_raw_arr=[];
+		foreach($proposed_operations as $operation_arr){
+			$proposed_operations_json_arr[]='{"op":'.$operation_arr[0].'}';
+			$proposed_operations_raw_arr[]=$operation_arr[1];
+		}
+		$json.=',"proposed_operations":['.implode(',',$proposed_operations_json_arr).']';
+		//review_period_time optional
+		if($review_period_time){
+			$json.=',"review_period_time":"'.$review_period_time.'"';
+		}
+		$json.='}]';
+		$raw='16';//operation number is 22
+		$raw.=$this->encode_string($author);
+		$raw.=$this->encode_string($title);
+		$raw.=$this->encode_string($memo);
+		$raw.=$this->encode_timestamp($expiration_time);
+		$raw.=$this->encode_uint8(count($proposed_operations_raw_arr)).implode('',$proposed_operations_raw_arr);
+		//review_period_time optional
+		if(false===$review_period_time){
+			$raw.='00';
+		}
+		else{
+			$raw.='01';
+			$raw.=$this->encode_timestamp($review_period_time);
+		}
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
+	function build_proposal_update($author,$title,
+		$active_approvals_to_add=[],$active_approvals_to_remove=[],
+		$master_approvals_to_add=[],$master_approvals_to_remove=[],
+		$regular_approvals_to_add=[],$regular_approvals_to_remove=[],
+		$key_approvals_to_add=[],$key_approvals_to_remove=[]
+	){
+		$json='["proposal_update",{';
+		$json.='"author":"'.$author.'"';
+		$json.=',"title":"'.$title.'"';
+		$active_approvals_to_add_arr=[];
+		foreach($active_approvals_to_add as $v){
+			$active_approvals_to_add_arr[]='"'.$v.'"';
+		}
+		$json.=',"active_approvals_to_add":['.implode(',',$active_approvals_to_add_arr).']';
+		$active_approvals_to_remove_arr=[];
+		foreach($active_approvals_to_remove as $v){
+			$active_approvals_to_remove_arr[]='"'.$v.'"';
+		}
+		$json.=',"active_approvals_to_remove":['.implode(',',$active_approvals_to_remove_arr).']';
+
+		$master_approvals_to_add_arr=[];
+		foreach($master_approvals_to_add as $v){
+			$master_approvals_to_add_arr[]='"'.$v.'"';
+		}
+		$json.=',"master_approvals_to_add":['.implode(',',$master_approvals_to_add_arr).']';
+		$master_approvals_to_remove_arr=[];
+		foreach($master_approvals_to_remove as $v){
+			$master_approvals_to_remove_arr[]='"'.$v.'"';
+		}
+		$json.=',"master_approvals_to_remove":['.implode(',',$master_approvals_to_remove_arr).']';
+
+		$regular_approvals_to_add_arr=[];
+		foreach($regular_approvals_to_add as $v){
+			$regular_approvals_to_add_arr[]='"'.$v.'"';
+		}
+		$json.=',"regular_approvals_to_add":['.implode(',',$regular_approvals_to_add_arr).']';
+		$regular_approvals_to_remove_arr=[];
+		foreach($regular_approvals_to_remove as $v){
+			$regular_approvals_to_remove_arr[]='"'.$v.'"';
+		}
+		$json.=',"regular_approvals_to_remove":['.implode(',',$regular_approvals_to_remove_arr).']';
+
+		$key_approvals_to_add_arr=[];
+		foreach($key_approvals_to_add as $v){
+			$key_approvals_to_add_arr[]='"'.$v.'"';
+		}
+		$json.=',"key_approvals_to_add":['.implode(',',$key_approvals_to_add_arr).']';
+		$key_approvals_to_remove_arr=[];
+		foreach($key_approvals_to_remove as $v){
+			$key_approvals_to_remove_arr[]='"'.$v.'"';
+		}
+		$json.=',"key_approvals_to_remove":['.implode(',',$key_approvals_to_remove_arr).']';
+
+		$json.='}]';
+		$raw='17';//operation number is 23
+		$raw.=$this->encode_string($author);
+		$raw.=$this->encode_string($title);
+		$raw.=$this->encode_array($active_approvals_to_add,['string']);
+		$raw.=$this->encode_array($active_approvals_to_remove,['string']);
+		$raw.=$this->encode_array($master_approvals_to_add,['string']);
+		$raw.=$this->encode_array($master_approvals_to_remove,['string']);
+		$raw.=$this->encode_array($regular_approvals_to_add,['string']);
+		$raw.=$this->encode_array($regular_approvals_to_remove,['string']);
+		$raw.=$this->encode_array($key_approvals_to_add,['string']);
+		$raw.=$this->encode_array($key_approvals_to_remove,['string']);
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
+	function build_proposal_delete($author,$title,$requester){
+		$json='["proposal_delete",{';
+		$json.='"author":"'.$author.'"';
+		$json.=',"title":"'.$title.'"';
+		$json.=',"requester":"'.$requester.'"';
+		$json.='}]';
+		$raw='18';//operation number is 24
+		$raw.=$this->encode_string($author);
+		$raw.=$this->encode_string($title);
+		$raw.=$this->encode_string($requester);
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
+
 	function start_queue(){
 		$this->queue=true;
 	}

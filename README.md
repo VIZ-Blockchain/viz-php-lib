@@ -280,4 +280,29 @@ $tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 ```
 
+Make transaction with proposal operations as array (need to use `build_` prefix). Approve that proposal with other account active key.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';//regular
+$account2='test2';
+$private_key2='5K...';//active
+
+$tx=new VIZ\Transaction('https://api.viz.world/',$private_key);
+$tx_data=$tx->proposal_create($account,'test','test proposal operation builder','2021-03-03T12:00:01',[$tx->build_transfer($account2,'committee','1.000 VIZ','proposed operation 1'),$tx->build_transfer($account2,'committee','2.000 VIZ','proposed operation 2')],false);
+var_dump($tx_data);
+
+$tx_status=$tx->execute($tx_data['json']);
+var_dump($tx_status);
+
+$tx2=new VIZ\Transaction($config['jsonrpc_node'],$private_key2);
+$tx2_data=$tx2->proposal_update($account,'test',[$account2]);
+var_dump($tx2_data);
+
+$tx2_status=$tx->execute($tx2_data['json']);
+var_dump($tx2_status);
+```
+
 May VIZ be with you.
