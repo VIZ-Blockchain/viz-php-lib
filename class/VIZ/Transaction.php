@@ -1079,6 +1079,50 @@ class Transaction{
 		$raw.=$this->encode_bool($auto_renewal);
 		return [$json,$raw];
 	}
+	function build_set_account_price($account,$account_seller,$account_offer_price,$account_on_sale){
+		$json='["set_account_price",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"account_seller":"'.$account_seller.'"';
+		$json.=',"account_offer_price":"'.$account_offer_price.'"';
+		$json.=',"account_on_sale":'.($account_on_sale?'true':'false').'';
+		$json.='}]';
+		$raw='36';//operation number is 54
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($account_seller);
+		$raw.=$this->encode_asset($account_offer_price);
+		$raw.=$this->encode_bool($account_on_sale);
+		return [$json,$raw];
+	}
+	function build_set_subaccount_price($account,$subaccount_seller,$subaccount_offer_price,$subaccount_on_sale){
+		$json='["set_subaccount_price",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"subaccount_seller":"'.$subaccount_seller.'"';
+		$json.=',"subaccount_offer_price":"'.$subaccount_offer_price.'"';
+		$json.=',"subaccount_on_sale":'.($subaccount_on_sale?'true':'false').'';
+		$json.='}]';
+		$raw='37';//operation number is 55
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($subaccount_seller);
+		$raw.=$this->encode_asset($subaccount_offer_price);
+		$raw.=$this->encode_bool($subaccount_on_sale);
+		return [$json,$raw];
+	}
+	function build_buy_account($buyer,$account,$account_offer_price,$account_authorities_key,$tokens_to_shares){
+		$json='["buy_account",{';
+		$json.='"buyer":"'.$buyer.'"';
+		$json.=',"account":"'.$account.'"';
+		$json.=',"account_offer_price":"'.$account_offer_price.'"';
+		$json.=',"account_authorities_key":"'.$account_authorities_key.'"';
+		$json.=',"tokens_to_shares":"'.$tokens_to_shares.'"';
+		$json.='}]';
+		$raw='38';//operation number is 56
+		$raw.=$this->encode_string($buyer);
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_asset($account_offer_price);
+		$raw.=$this->encode_public_key($account_authorities_key);
+		$raw.=$this->encode_asset($tokens_to_shares);
+		return [$json,$raw];
+	}
 	function build_proposal_create($author,$title,$memo,$expiration_time,$proposed_operations=[],$review_period_time=false){
 		$json='["proposal_create",{';
 		$json.='"author":"'.$author.'"';
