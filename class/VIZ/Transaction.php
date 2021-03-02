@@ -1045,6 +1045,40 @@ class Transaction{
 		$raw.=$this->encode_public_key($block_signing_key);
 		return [$json,$raw];
 	}
+	function build_set_paid_subscription($account,$url,$levels,$amount,$period){
+		$json='["set_paid_subscription",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"url":"'.$url.'"';
+		$json.=',"levels":'.$levels.'';
+		$json.=',"amount":"'.$amount.'"';
+		$json.=',"period":'.$period.'';
+		$json.='}]';
+		$raw='32';//operation number is 50
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($url);
+		$raw.=$this->encode_uint16($levels);
+		$raw.=$this->encode_asset($amount);
+		$raw.=$this->encode_uint16($period);
+		return [$json,$raw];
+	}
+	function build_paid_subscribe($subscriber,$account,$level,$amount,$period,$auto_renewal){
+		$json='["paid_subscribe",{';
+		$json.='"subscriber":"'.$subscriber.'"';
+		$json.=',"account":"'.$account.'"';
+		$json.=',"level":'.$level.'';
+		$json.=',"amount":"'.$amount.'"';
+		$json.=',"period":'.$period.'';
+		$json.=',"auto_renewal":'.($auto_renewal?'true':'false').'';
+		$json.='}]';
+		$raw='33';//operation number is 51
+		$raw.=$this->encode_string($subscriber);
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_uint16($level);
+		$raw.=$this->encode_asset($amount);
+		$raw.=$this->encode_uint16($period);
+		$raw.=$this->encode_bool($auto_renewal);
+		return [$json,$raw];
+	}
 	function build_proposal_create($author,$title,$memo,$expiration_time,$proposed_operations=[],$review_period_time=false){
 		$json='["proposal_create",{';
 		$json.='"author":"'.$author.'"';
