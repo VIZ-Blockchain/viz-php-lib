@@ -938,6 +938,75 @@ class Transaction{
 		$raw.=$this->encode_string($invite_secret);
 		return [$json,$raw];
 	}
+	function build_versioned_chain_properties_update($owner,$props){
+		$version=3;
+		$default_props=[
+			'account_creation_fee'=>'1.000 VIZ',
+			'maximum_block_size'=>65536,
+			'create_account_delegation_ratio'=>10,
+			'create_account_delegation_time'=>2592000,
+			'min_delegation'=>'1.000 VIZ',
+			'min_curation_percent'=>0,
+			'max_curation_percent'=>10000,
+			'bandwidth_reserve_percent'=>0,
+			'bandwidth_reserve_below'=>'0.000000 SHARES',
+			'flag_energy_additional_cost'=>0,
+			'vote_accounting_min_rshares'=>100000,
+			'committee_request_approve_min_percent'=>1000,
+			'inflation_witness_percent'=>2000,
+			'inflation_ratio_committee_vs_reward_fund'=>5000,
+			'inflation_recalc_period'=>806400,
+			'data_operations_cost_additional_bandwidth'=>10000,
+			'witness_miss_penalty_percent'=>100,
+			'witness_miss_penalty_duration'=>86400,
+			'create_invite_min_balance'=>'10.000 VIZ',
+			'committee_create_request_fee'=>'100.000 VIZ',
+			'create_paid_subscription_fee'=>'100.000 VIZ',
+			'account_on_sale_fee'=>'10.000 VIZ',
+			'subaccount_on_sale_fee'=>'100.000 VIZ',
+			'witness_declaration_fee'=>'10.000 VIZ',
+			'withdraw_intervals'=>28,
+		];
+		$props_types=[
+			'account_creation_fee'=>'asset',
+			'maximum_block_size'=>'uint32',
+			'create_account_delegation_ratio'=>'uint32',
+			'create_account_delegation_time'=>'uint32',
+			'min_delegation'=>'asset',
+			'min_curation_percent'=>'int16',
+			'max_curation_percent'=>'int16',
+			'bandwidth_reserve_percent'=>'int16',
+			'bandwidth_reserve_below'=>'asset',
+			'flag_energy_additional_cost'=>'int16',
+			'vote_accounting_min_rshares'=>'uint32',
+			'committee_request_approve_min_percent'=>'int16',
+			'inflation_witness_percent'=>'int16',
+			'inflation_ratio_committee_vs_reward_fund'=>'int16',
+			'inflation_recalc_period'=>'uint32',
+			'data_operations_cost_additional_bandwidth'=>'uint32',
+			'witness_miss_penalty_percent'=>'int16',
+			'witness_miss_penalty_duration'=>'uint32',
+			'create_invite_min_balance'=>'asset',
+			'committee_create_request_fee'=>'asset',
+			'create_paid_subscription_fee'=>'asset',
+			'account_on_sale_fee'=>'asset',
+			'subaccount_on_sale_fee'=>'asset',
+			'witness_declaration_fee'=>'asset',
+			'withdraw_intervals'=>'uint16'
+		];
+		$json='["versioned_chain_properties_update",{';
+		$json.='"owner":"'.$owner.'"';
+		$new_props=$default_props;
+		foreach($props as $prop=>$value){
+			$new_props[$prop]=$value;
+		}
+		$json.=',"props":['.$version.','.json_encode($new_props).']';
+		$json.='}]';
+		$raw='2E';//operation number is 46
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_uint8($version).$this->encode_array($new_props,$props_types,true);
+		return [$json,$raw];
+	}
 	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
 		$json='["custom",{';
 		$json.='"required_active_auths":[';
