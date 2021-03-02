@@ -323,6 +323,381 @@ class Transaction{
 		$raw.='00';//op extension
 		return [$json,$raw];
 	}
+	function build_account_update($account,$master,$active,$regular,$memo_key='VIZ1111111111111111111111111111111114T1Anm',$json_metadata=''){
+		$json='["account_update",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"master":{';
+		$master_str_arr=[];
+		$master_arr=[];
+		if(is_string($master)){
+			$master_public_key=$master;
+			$master=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$master_public_key,1]],
+			];
+		}
+		if(is_array($master)){
+			if(!isset($master['weight_threshold'])){
+				$master['weight_threshold']=1;
+			}
+			$master_arr['weight_threshold']=$master['weight_threshold'];
+			$master_arr['account_auths']=[];
+			foreach($master['account_auths'] as $accounts_auth_arr){
+				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$master_arr['key_auths']=[];
+			foreach($master['key_auths'] as $key_auths_arr){
+				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($master_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$master_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$master_str_arr);
+		}
+		$json.='}';
+		$json.=',"active":{';
+		$active_str_arr=[];
+		$active_arr=[];
+		if(is_string($active)){
+			$active_public_key=$active;
+			$active=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$active_public_key,1]],
+			];
+		}
+		if(!isset($active['weight_threshold'])){
+			$active['weight_threshold']=1;
+		}
+		if(is_array($active)){
+			$active_arr['weight_threshold']=$active['weight_threshold'];
+			$active_arr['account_auths']=[];
+			foreach($active['account_auths'] as $accounts_auth_arr){
+				$active_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$active_arr['key_auths']=[];
+			foreach($active['key_auths'] as $key_auths_arr){
+				$active_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($active_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$active_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$active_str_arr);
+		}
+		$json.='}';
+		$json.=',"regular":{';
+		$regular_str_arr=[];
+		$regular_arr=[];
+		if(is_string($regular)){
+			$regular_public_key=$regular;
+			$regular=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$regular_public_key,1]],
+			];
+		}
+		if(!isset($regular['weight_threshold'])){
+			$regular['weight_threshold']=1;
+		}
+		if(is_array($regular)){
+			$regular_arr['weight_threshold']=$regular['weight_threshold'];
+			$regular_arr['account_auths']=[];
+			foreach($regular['account_auths'] as $accounts_auth_arr){
+				$regular_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$regular_arr['key_auths']=[];
+			foreach($regular['key_auths'] as $key_auths_arr){
+				$regular_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($regular_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$regular_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$regular_str_arr);
+		}
+		$json.='}';
+		$json.=',"memo_key":"'.$memo_key.'"';
+		$json.=',"json_metadata":"'.$json_metadata.'"';
+		$json.='}]';
+
+		$raw='05';//operation number is 5
+		$raw.=$this->encode_string($account);
+
+		$raw.=$this->encode_uint32($master['weight_threshold']);
+		$raw.=$this->encode_array($master['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($master['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_uint32($active['weight_threshold']);
+		$raw.=$this->encode_array($active['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($active['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_uint32($regular['weight_threshold']);
+		$raw.=$this->encode_array($regular['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($regular['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_public_key($memo_key);
+		$raw.=$this->encode_string($json_metadata);
+		return [$json,$raw];
+	}
+	function build_request_account_recovery($recovery_account,$account_to_recover,$new_master){
+		$json='["request_account_recovery",{';
+		$json.='"recovery_account":"'.$recovery_account.'"';
+		$json.=',"account_to_recover":"'.$account_to_recover.'"';
+		$json.=',"new_master_authority":{';
+		$master_str_arr=[];
+		$master_arr=[];
+		if(is_string($new_master)){
+			$master_public_key=$new_master;
+			$new_master=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$master_public_key,1]],
+			];
+		}
+		if(is_array($new_master)){
+			if(!isset($new_master['weight_threshold'])){
+				$new_master['weight_threshold']=1;
+			}
+			$master_arr['weight_threshold']=$new_master['weight_threshold'];
+			$master_arr['account_auths']=[];
+			foreach($new_master['account_auths'] as $accounts_auth_arr){
+				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$master_arr['key_auths']=[];
+			foreach($new_master['key_auths'] as $key_auths_arr){
+				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($master_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$master_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$master_str_arr);
+		}
+		$json.='}';
+		$json.='}]';
+
+		$raw='0C';//operation number is 12
+		$raw.=$this->encode_string($recovery_account);
+		$raw.=$this->encode_string($account_to_recover);
+
+		$raw.=$this->encode_uint32($new_master['weight_threshold']);
+		$raw.=$this->encode_array($new_master['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($new_master['key_auths'],[['public_key','uint16']]);
+
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
+	function build_recover_account($account_to_recover,$new_master,$recent_master){
+		$json='["recover_account",{';
+		$json.='"account_to_recover":"'.$account_to_recover.'"';
+		$json.=',"new_master":{';
+		$master_str_arr=[];
+		$master_arr=[];
+		if(is_string($new_master)){
+			$master_public_key=$new_master;
+			$new_master=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$master_public_key,1]],
+			];
+		}
+		if(is_array($new_master)){
+			if(!isset($new_master['weight_threshold'])){
+				$new_master['weight_threshold']=1;
+			}
+			$master_arr['weight_threshold']=$new_master['weight_threshold'];
+			$master_arr['account_auths']=[];
+			foreach($new_master['account_auths'] as $accounts_auth_arr){
+				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$master_arr['key_auths']=[];
+			foreach($new_master['key_auths'] as $key_auths_arr){
+				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($master_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$master_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$master_str_arr);
+		}
+		$json.='}';
+		$json.=',"recent_master_authority":{';
+		$master_str_arr=[];
+		$master_arr=[];
+		if(is_string($recent_master)){
+			$master_public_key=$recent_master;
+			$recent_master=[
+				'weight_threshold'=>1,
+				'account_auths'=>[],
+				'key_auths'=>[[$master_public_key,1]],
+			];
+		}
+		if(is_array($recent_master)){
+			if(!isset($recent_master['weight_threshold'])){
+				$recent_master['weight_threshold']=1;
+			}
+			$master_arr['weight_threshold']=$recent_master['weight_threshold'];
+			$master_arr['account_auths']=[];
+			foreach($recent_master['account_auths'] as $accounts_auth_arr){
+				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
+			}
+			$master_arr['key_auths']=[];
+			foreach($recent_master['key_auths'] as $key_auths_arr){
+				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
+			}
+			foreach($master_arr as $k=>$v){
+				$v_str='';
+				if(is_array($v)){
+					if(count($v)){
+						$v_str='['.implode(',',$v).']';
+					}
+					else{
+						$v_str='[]';
+					}
+				}
+				else{
+					$v_str=$v;
+				}
+				$master_str_arr[]='"'.$k.'":'.$v_str;
+			}
+			$json.=implode(',',$master_str_arr);
+		}
+		$json.='}';
+		$json.='}]';
+
+		$raw='0D';//operation number is 13
+		$raw.=$this->encode_string($account_to_recover);
+
+		$raw.=$this->encode_uint32($new_master['weight_threshold']);
+		$raw.=$this->encode_array($new_master['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($new_master['key_auths'],[['public_key','uint16']]);
+
+		$raw.=$this->encode_uint32($recent_master['weight_threshold']);
+		$raw.=$this->encode_array($recent_master['account_auths'],[['string','uint16']]);
+		$raw.=$this->encode_array($recent_master['key_auths'],[['public_key','uint16']]);
+
+		$raw.='00';//op extension
+		return [$json,$raw];
+	}
+	function build_account_metadata($account,$json_metadata=''){
+		$json='["account_metadata",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"json_metadata":"'.$json_metadata.'"';
+		$json.='}]';
+
+		$raw='15';//operation number is 21
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($json_metadata);
+		return [$json,$raw];
+	}
+	function build_account_witness_vote($account,$witness,$approve=true){
+		$json='["account_witness_vote",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"witness":"'.$witness.'"';
+		$json.=',"approve":'.($approve?'true':'false').'';
+		$json.='}]';
+
+		$raw='07';//operation number is 7
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($witness);
+		$raw.=$this->encode_bool($approve);
+		return [$json,$raw];
+	}
+	function build_change_recovery_account($account_to_recover,$new_recovery_account){
+		$json='["change_recovery_account",{';
+		$json.='"account_to_recover":"'.$account_to_recover.'"';
+		$json.=',"new_recovery_account":"'.$new_recovery_account.'"';
+		$json.='}]';
+
+		$raw='0E';//operation number is 14
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($witness);
+		return [$json,$raw];
+	}
+	function build_account_witness_proxy($account,$proxy){
+		$json='["account_witness_proxy",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"proxy":"'.$proxy.'"';
+		$json.='}]';
+
+		$raw='08';//operation number is 8
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($proxy);
+		return [$json,$raw];
+	}
+	function build_set_withdraw_vesting_route($from_account,$to_account,$percent,$auto_vest=true){
+		$json='["set_withdraw_vesting_route",{';
+		$json.='"from_account":"'.$from_account.'"';
+		$json.=',"to_account":"'.$to_account.'"';
+		$json.=',"percent":'.$percent.'';
+		$json.=',"auto_vest":'.($auto_vest?'true':'false').'';
+		$json.='}]';
+
+		$raw='0B';//operation number is 11
+		$raw.=$this->encode_string($from_account);
+		$raw.=$this->encode_string($to_account);
+		$raw.=$this->encode_int($percent,2);
+		$raw.=$this->encode_bool($auto_vest);
+		return [$json,$raw];
+	}
 	function build_award($initiator,$receiver,$energy,$custom_sequence=0,$memo='',$beneficiaries=[]){
 		$json='["award",{';
 		$json.='"initiator":"'.$initiator.'"';
