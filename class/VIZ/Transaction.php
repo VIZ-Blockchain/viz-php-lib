@@ -900,6 +900,44 @@ class Transaction{
 		$raw.=$this->encode_int16($vote_percent);
 		return [$json,$raw];
 	}
+	function build_claim_invite_balance($initiator,$receiver,$invite_secret){
+		$json='["claim_invite_balance",{';
+		$json.='"initiator":"'.$initiator.'"';
+		$json.=',"receiver":"'.$receiver.'"';
+		$json.=',"invite_secret":"'.$invite_secret.'"';
+		$json.='}]';
+		$raw='2C';//operation number is 44
+		$raw.=$this->encode_string($initiator);
+		$raw.=$this->encode_string($receiver);
+		$raw.=$this->encode_string($invite_secret);
+		return [$json,$raw];
+	}
+	function build_invite_registration($initiator,$new_account_name,$invite_secret,$new_account_key){
+		$json='["invite_registration",{';
+		$json.='"initiator":"'.$initiator.'"';
+		$json.=',"new_account_name":"'.$new_account_name.'"';
+		$json.=',"invite_secret":"'.$invite_secret.'"';
+		$json.=',"new_account_key":"'.$new_account_key.'"';
+		$json.='}]';
+		$raw='2D';//operation number is 45
+		$raw.=$this->encode_string($initiator);
+		$raw.=$this->encode_string($new_account_name);
+		$raw.=$this->encode_string($invite_secret);
+		$raw.=$this->encode_public_key($new_account_key);
+		return [$json,$raw];
+	}
+	function build_use_invite_balance($initiator,$receiver,$invite_secret){
+		$json='["use_invite_balance",{';
+		$json.='"initiator":"'.$initiator.'"';
+		$json.=',"receiver":"'.$receiver.'"';
+		$json.=',"invite_secret":"'.$invite_secret.'"';
+		$json.='}]';
+		$raw='3A';//operation number is 58
+		$raw.=$this->encode_string($initiator);
+		$raw.=$this->encode_string($receiver);
+		$raw.=$this->encode_string($invite_secret);
+		return [$json,$raw];
+	}
 	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
 		$json='["custom",{';
 		$json.='"required_active_auths":[';
