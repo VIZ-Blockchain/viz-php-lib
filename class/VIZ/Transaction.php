@@ -1281,8 +1281,8 @@ class Transaction{
 		return $public_key->hex;
 	}
 	function encode_string($input){
-		$length=bin2hex(pack('C',strlen($input)));
-		return $length.bin2hex(pack('H*',bin2hex($input)));
+		$input_vlq=Utils::vlq_create($input);
+		return bin2hex($input_vlq).bin2hex(pack('H*',bin2hex($input)));
 	}
 	function encode_timestamp($input){
 		$unixtime=DateTime::createFromFormat('Y-m-d\TH:i:s',$input)->format('U');
