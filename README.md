@@ -309,7 +309,7 @@ var_dump($tx2_status);
 Utils method for post text object to Voice protocol. Method attributes (* - is optional):
 
 Attribute | Description
------------- | ------------ | -------------
+------------ | -------------
 text | Simple text note.
 reply* | Link to replied context in `viz://` url scheme.
 share* | Link to shared context in any url scheme.
@@ -329,7 +329,7 @@ var_dump($status);
 Utils method for post publication object to Voice protocol. Method attributes (* - is optional):
 
 Attribute | Description
------------- | ------------ | -------------
+------------ | -------------
 title | Publication title.
 markdown | Publication text with voice markdown.
 description* | Publication short description for preview.
