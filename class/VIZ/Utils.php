@@ -5,6 +5,113 @@ use BI\BigInteger;
 use kornrunner\Keccak;
 
 class Utils{
+	static function voice_text($endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false){
+		if('object'==gettype($key)){
+			if('VIZ\Key'==get_class($key)){
+				$key=$key->encode();
+			}
+			else{
+				return false;
+			}
+		}
+		$tx=new Transaction($endpoint,$key);
+		$previous=0;
+		if(false!==$loop){
+			$previous=$loop;
+		}
+		else{
+			$account_data=$tx->api->execute_method('get_account',[$account,'V']);
+			if(false!==$account_data){
+				$previous=$account_data['custom_sequence_block_num'];
+			}
+			else{
+				return false;
+			}
+		}
+		$object=[
+			'p'=>$previous,
+			//'t'=>'t',//text as default type
+			'd'=>[
+				't'=>$text,
+			]
+		];
+		if($reply){
+			$object['d']['r']=$reply;
+		}
+		else{//share conflict with reply
+			if($share){
+				$object['d']['s']=$share;
+			}
+		}
+		if($beneficiaries){//json example: [{"account":"committee","weight":1000}]
+			/* php example:
+			[
+				['account'=>'committee','weight'=>1000]
+			]
+			*/
+			$object['d']['b']=$beneficiaries;
+		}
+		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
+		$tx_status=$tx->execute($tx_data['json']);
+		return (false!==$tx_status);
+	}
+	static function voice_publication($endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false){
+		if('object'==gettype($key)){
+			if('VIZ\Key'==get_class($key)){
+				$key=$key->encode();
+			}
+			else{
+				return false;
+			}
+		}
+		$tx=new Transaction($endpoint,$key);
+		$previous=0;
+		if(false!==$loop){
+			$previous=$loop;
+		}
+		else{
+			$account_data=$tx->api->execute_method('get_account',[$account,'V']);
+			if(false!==$account_data){
+				$previous=$account_data['custom_sequence_block_num'];
+			}
+			else{
+				return false;
+			}
+		}
+		$object=[
+			'p'=>$previous,
+			't'=>'p',//text as default type
+			'd'=>[
+				't'=>$title,
+				'm'=>$markdown,
+			]
+		];
+		if($description){
+			$object['d']['d']=$description;
+		}
+		if($image){
+			$object['d']['i']=$image;
+		}
+		if($reply){
+			$object['d']['r']=$reply;
+		}
+		else{//share conflict with reply
+			if($share){
+				$object['d']['s']=$share;
+			}
+		}
+		if($beneficiaries){//json example: [{"account":"committee","weight":1000}]
+			/* php example:
+			[
+				['account'=>'committee','weight'=>1000]
+			]
+			*/
+			$object['d']['b']=$beneficiaries;
+		}
+		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
+		$tx_status=$tx->execute($tx_data['json']);
+		return (false!==$tx_status);
+	}
 	// Base58 encoding/decoding functions - all credits go to https://github.com/stephen-hill/base58php
 	// The MIT License (MIT) Copyright (c) 2014 Stephen Hill <stephen@gatekiller.co.uk>
 	// Adapted for BI\BigInteger wrapper

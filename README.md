@@ -14,6 +14,7 @@ Native PHP class for VIZ Keys, Transaction, JsonRPC
 - Contains modificated classes for best fit to VIZ Blockchain (all-in-one)
 - Native code without additional installations (sry composer, but we need other changes in third-party classes)
 - Utils for keys compatibility with Ethereum, Bitcoin addresses
+- Utilities with (Voice protocol)[https://github.com/VIZ-Blockchain/Free-Speech-Project/blob/master/specification.md] support: voice_text, voice_publication
 - MIT License
 
 ## Dependencies
@@ -297,12 +298,86 @@ var_dump($tx_data);
 $tx_status=$tx->execute($tx_data['json']);
 var_dump($tx_status);
 
-$tx2=new VIZ\Transaction($config['jsonrpc_node'],$private_key2);
+$tx2=new VIZ\Transaction('https://api.viz.world/',$private_key2);
 $tx2_data=$tx2->proposal_update($account,'test',[$account2]);
 var_dump($tx2_data);
 
 $tx2_status=$tx->execute($tx2_data['json']);
 var_dump($tx2_status);
+```
+
+Utils method for post text object to Voice protocol. Method attributes (* - is optional):
+
+Attribute | Description
+------------ | ------------ | -------------
+text | Simple text note.
+reply* | Link to replied context in `viz://` url scheme.
+share* | Link to shared context in any url scheme.
+beneficiaries* | Array of objects `[]` contains `["account"=>"committee","weight"=>100]` for awarding beneficiaries details.
+loop* | Block num. Ability to make loop for previous objects, exclude from personal activity feed.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';//regular
+//$endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false
+$status=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,'Test from viz-php-lib');
+var_dump($status);
+```
+
+Utils method for post publication object to Voice protocol. Method attributes (* - is optional):
+
+Attribute | Description
+------------ | ------------ | -------------
+title | Publication title.
+markdown | Publication text with voice markdown.
+description* | Publication short description for preview.
+image* | Link to publication image for preview thumbnail.
+reply* | Link to replied context in `viz://` url scheme.
+share* | Link to shared context in any url scheme.
+beneficiaries* | Array of objects `[]` contains `["account"=>"committee","weight"=>100]` for awarding beneficiaries details.
+loop* | Block num. Ability to make loop for previous objects, exclude from personal activity feed.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';//regular
+$markdown='Well, Voice protocol markdown have **bold**, __italic__, ~~stroke~~ and `code`
+
+## Headers 2
+
+### And 3
+
+Also we got:
+
+> Quotes and
+
+>> Second style for citation
+
+Support lists:
+
+* Unordered
+* as ordinary
+* items
+
+And ordered, ofc:
+
+*n Yes
+*n it is!
+
+After all, simple images:
+![Alt text for image](https://viz.world/ubi-circle-300.jpg)
+
+Paragraph
+with
+multiline
+
+...and #en #example tags support :)';
+//$endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false
+$status=VIZ\Utils::voice_publication('https://api.viz.world/',$private_key,$account,'Test publication from viz-php-lib',$markdown);
+var_dump($status);
 ```
 
 May VIZ be with you.

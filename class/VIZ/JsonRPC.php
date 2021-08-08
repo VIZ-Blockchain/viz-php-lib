@@ -122,7 +122,7 @@ class JsonRpc{
 		if($post){
 			$method='POST';
 		}
-		preg_match('#://(.*)/#iUs',$url,$stock);
+		preg_match('#://(.*)/#iUs',$url.'/',$stock);
 		preg_match('#://'.$stock[1].'/(.*)$#iUs',$url,$stock2);
 		$host=$stock[1];
 		$use_port=false;

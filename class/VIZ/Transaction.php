@@ -668,8 +668,8 @@ class Transaction{
 		$json.='}]';
 
 		$raw='0E';//operation number is 14
-		$raw.=$this->encode_string($account);
-		$raw.=$this->encode_string($witness);
+		$raw.=$this->encode_string($account_to_recover);
+		$raw.=$this->encode_string($new_recovery_account);
 		return [$json,$raw];
 	}
 	function build_account_witness_proxy($account,$proxy){
@@ -863,7 +863,7 @@ class Transaction{
 	function build_committee_worker_create_request($creator,$url,$worker,$required_amount_min,$required_amount_max,$duration){
 		$json='["committee_worker_create_request",{';
 		$json.='"creator":"'.$creator.'"';
-		$json.=',"url":"'.url.'"';
+		$json.=',"url":"'.$url.'"';
 		$json.=',"worker":"'.$worker.'"';
 		$json.=',"required_amount_min":"'.$required_amount_min.'"';
 		$json.=',"required_amount_max":"'.$required_amount_max.'"';
@@ -881,7 +881,7 @@ class Transaction{
 	function build_committee_worker_cancel_request($creator,$request_id){
 		$json='["committee_worker_cancel_request",{';
 		$json.='"creator":"'.$creator.'"';
-		$json.=',"request_id":'.request_id.'';
+		$json.=',"request_id":'.$request_id.'';
 		$json.='}]';
 		$raw='24';//operation number is 36
 		$raw.=$this->encode_string($creator);
@@ -891,7 +891,7 @@ class Transaction{
 	function build_committee_vote_request($creator,$request_id,$vote_percent){
 		$json='["committee_vote_request",{';
 		$json.='"creator":"'.$creator.'"';
-		$json.=',"request_id":'.request_id.'';
+		$json.=',"request_id":'.$request_id.'';
 		$json.=',"vote_percent":'.$vote_percent.'';
 		$json.='}]';
 		$raw='25';//operation number is 37
