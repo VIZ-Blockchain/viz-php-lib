@@ -274,6 +274,11 @@ class Key{
 		$copy->private=false;
 		return $copy;
 	}
+	function get_public_key_hex(){
+		$private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
+		//compact/compressed (x03/x02 + x)
+		return $private_key->getPublic(true,'hex');
+	}
 	function get_full_public_key_hex(){
 		$private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
 		//full representation (uncompressed: x04 + x + y)

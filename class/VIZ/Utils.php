@@ -287,8 +287,8 @@ class Utils{
 		}
 		return $result[0];
 	}
-	static function privkey_hex_to_btc_wif($hex){
-		$privkey_hex='80'.$hex;
+	static function privkey_hex_to_btc_wif($hex,$compressed=false){
+		$privkey_hex='80'.$hex.($compressed?'01':'');
 		$checksum=substr(hash('sha256',hash('sha256',hex2bin($privkey_hex),true),true),0,4);
 		return Utils::base58_encode(hex2bin($privkey_hex).$checksum);
 	}
@@ -301,6 +301,12 @@ class Utils{
 		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
 		$checksum=substr(hash('sha256',hash('sha256',$pubkey_hash,true),true),0,4);
 		return Utils::base58_encode($pubkey_hash.$checksum);
+	}
+
+	function get_public_key_hex(){
+		$private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
+		//compact/compressed (x03/x02 + x)
+		return $private_key->getPublic(true,'hex');
 	}
 	static function full_pubkey_hex_to_ltc_address($hex,$network_id="\x30"){
 		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
