@@ -13,6 +13,7 @@ class Auth{
 	public $domain;
 	public $authority;
 	public $action;
+	public $fix_server_timezone=false;
 	function __construct($node,$domain,$action='auth',$authority='regular',$range=60){
 		$this->jsonrpc=new JsonRPC($node);
 		$this->key=new Key();
@@ -24,7 +25,10 @@ class Auth{
 	function check($data,$signature){
 		$data_arr=explode(':',$data);//domain:action:account:authority:unixtime:nonce
 
-		$time=time()-(new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime());
+		$time=time();
+		if($fix_server_timezone){
+			$time-=(new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime());
+		}
 		$start_time=$time - $this->range;
 		$end_time=$time + $this->range;
 
