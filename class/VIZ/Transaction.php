@@ -50,8 +50,13 @@ class Transaction{
 			return $tx;
 		}
 	}
-	function execute($transaction_json){
-		return $this->api->execute_method('broadcast_transaction',$transaction_json,false);
+	function execute($transaction_json,$synchronous=false){
+		if($synchronous){
+			return $this->api->execute_method('broadcast_transaction_synchronous',$transaction_json,false);
+		}
+		else{
+			return $this->api->execute_method('broadcast_transaction',$transaction_json,false);
+		}
 	}
 	function build($operations_json,$operations_data,$operations_count){
 		$dgp=$this->api->execute_method('get_dynamic_global_properties');

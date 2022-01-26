@@ -155,7 +155,7 @@ class JsonRpc{
 		$request.=$post;
 		$request.="\r\n";
 		$request.="\r\n";
-		if($debug){
+		if($debug||$this->debug){
 			$this->request_arr[]=$request;
 		}
 		$result='';
@@ -202,7 +202,7 @@ class JsonRpc{
 			}
 			fclose($sock);
 			if(microtime(true)>$read_timeout){
-				if($debug){
+				if($debug||$this->debug){
 					print '!!! SOCKET TIMED OUT '.$this->read_timeout.' SEC ['.date('d.m.Y H:i:s').']'.PHP_EOL;
 					print_r($request);
 				}
@@ -212,7 +212,7 @@ class JsonRpc{
 		else{
 			return false;
 		}
-		if($debug){
+		if($debug||$this->debug){
 			$this->result_arr[]=$result;
 		}
 		return $result;

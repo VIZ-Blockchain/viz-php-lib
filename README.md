@@ -233,7 +233,8 @@ $tx_data=$tx->custom([],[$account],'test','{"msg":"testing viz-php-lib custom op
 var_dump($tx_data);
 
 $tx->api->return_only_result=false;
-$tx_status=$tx->execute($tx_data['json']);
+//second attribute is synchronous, if setted then return block num where transaction was witnessed
+$tx_status=$tx->execute($tx_data['json'],true);
 var_dump($tx_status);
 ```
 
@@ -375,9 +376,25 @@ with
 multiline
 
 ...and #en #example tags support :)';
-//$endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false
+//$endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false
 $status=VIZ\Utils::voice_publication('https://api.viz.world/',$private_key,$account,'Test publication from viz-php-lib',$markdown);
 var_dump($status);
+```
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';
+$text='Test text and event from viz-php-lib';
+
+//create Voice object with text type (last attribute is synchronous that returns block num where is transaction was witnessed)
+$object_block_num=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,'New test from viz-php-lib',false,false,false,false,true);
+print 'Object: viz://@'.$account.'/'.$object_block_num.'/';
+
+//hide event
+$event_block_num=VIZ\Utils::voice_event('https://api.viz.world/',$private_key,$account,'h',false,$object_block_num,false,false,true);
+print 'Hide event for this object: viz://@'.$account.'/'.$object_block_num.'/?event='.event_block_num;
 ```
 
 May VIZ be with you.

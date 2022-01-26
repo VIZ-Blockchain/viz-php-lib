@@ -5,42 +5,14 @@ use BI\BigInteger;
 use kornrunner\Keccak;
 
 class Utils{
-	static function voice_text($endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false){
-		if('object'==gettype($key)){
-			if('VIZ\Key'==get_class($key)){
-				$key=$key->encode();
-			}
-			else{
-				return false;
-			}
-		}
-		$tx=new Transaction($endpoint,$key);
-		$previous=0;
-		if(false!==$loop){
-			$previous=$loop;
-		}
-		else{
-			$account_data=$tx->api->execute_method('get_account',[$account,'V']);
-			if(false!==$account_data){
-				$previous=$account_data['custom_sequence_block_num'];
-			}
-			else{
-				return false;
-			}
-		}
-		$object=[
-			'p'=>$previous,
-			//'t'=>'t',//text as default type
-			'd'=>[
-				't'=>$text,
-			]
-		];
+	static function prepare_voice_text_data($text,$reply=false,$share=false,$beneficiaries=false){
+		$data=['t'=>$text];
 		if($reply){
-			$object['d']['r']=$reply;
+			$data['r']=$reply;
 		}
 		else{//share conflict with reply
 			if($share){
-				$object['d']['s']=$share;
+				$data['s']=$share;
 			}
 		}
 		if($beneficiaries){//json example: [{"account":"committee","weight":1000}]
@@ -49,13 +21,19 @@ class Utils{
 				['account'=>'committee','weight'=>1000]
 			]
 			*/
-			$object['d']['b']=$beneficiaries;
+			$data['b']=$beneficiaries;
 		}
-		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
-		$tx_status=$tx->execute($tx_data['json']);
-		return (false!==$tx_status);
+		return $data;
 	}
-	static function voice_publication($endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false){
+	static function prepare_voice_text($previous,$text,$reply=false,$share=false,$beneficiaries=false){
+		$object=[
+			'p'=>(int)$previous,
+			//'t'=>'t',//text as default type
+			'd'=>Utils::prepare_voice_text_data($text,$reply,$share,$beneficiaries),
+		];
+		return $object;
+	}
+	static function voice_text($endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false){
 		if('object'==gettype($key)){
 			if('VIZ\Key'==get_class($key)){
 				$key=$key->encode();
@@ -78,26 +56,33 @@ class Utils{
 				return false;
 			}
 		}
-		$object=[
-			'p'=>$previous,
-			't'=>'p',//text as default type
-			'd'=>[
-				't'=>$title,
-				'm'=>$markdown,
-			]
+		$object=Utils::prepare_voice_text($previous,$text,$reply,$share,$beneficiaries);
+		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
+		$tx_status=$tx->execute($tx_data['json'],$synchronous);
+		if(!$synchronous){
+			return (false!==$tx_status);
+		}
+		else{
+			return ($tx_status['block_num']?$tx_status['block_num']:false);
+		}
+	}
+	static function prepare_voice_publication_data($title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false){
+		$data=[
+			't'=>$title,
+			'm'=>$markdown,
 		];
 		if($description){
-			$object['d']['d']=$description;
+			$data['d']=$description;
 		}
 		if($image){
-			$object['d']['i']=$image;
+			$data['i']=$image;
 		}
 		if($reply){
-			$object['d']['r']=$reply;
+			$data['r']=$reply;
 		}
 		else{//share conflict with reply
 			if($share){
-				$object['d']['s']=$share;
+				$data['s']=$share;
 			}
 		}
 		if($beneficiaries){//json example: [{"account":"committee","weight":1000}]
@@ -106,11 +91,102 @@ class Utils{
 				['account'=>'committee','weight'=>1000]
 			]
 			*/
-			$object['d']['b']=$beneficiaries;
+			$data['b']=$beneficiaries;
 		}
+		return $data;
+	}
+	static function prepare_voice_publication($previous,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false){
+		$object=[
+			'p'=>(int)$previous,
+			't'=>'p',//publication type
+			'd'=>Utils::prepare_voice_publication_data($title,$markdown,$description,$image,$reply,$share,$beneficiaries),
+		];
+		return $object;
+	}
+	static function voice_publication($endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false){
+		if('object'==gettype($key)){
+			if('VIZ\Key'==get_class($key)){
+				$key=$key->encode();
+			}
+			else{
+				return false;
+			}
+		}
+		$tx=new Transaction($endpoint,$key);
+		$previous=0;
+		if(false!==$loop){
+			$previous=$loop;
+		}
+		else{
+			$account_data=$tx->api->execute_method('get_account',[$account,'V']);
+			if(false!==$account_data){
+				$previous=$account_data['custom_sequence_block_num'];
+			}
+			else{
+				return false;
+			}
+		}
+		$object=Utils::prepare_voice_publication($previous,$title,$markdown,$description,$image,$reply,$share,$beneficiaries);
 		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
-		$tx_status=$tx->execute($tx_data['json']);
-		return (false!==$tx_status);
+		$tx_status=$tx->execute($tx_data['json'],$synchronous);
+		if(!$synchronous){
+			return (false!==$tx_status);
+		}
+		else{
+			return ($tx_status['block_num']?$tx_status['block_num']:false);
+		}
+	}
+	static function prepare_voice_event($previous,$event){
+		$object=[
+			'p'=>(int)$previous,
+			'e'=>$event,
+		];
+		return $object;
+	}
+	static function voice_event($endpoint,$key,$account,$event_type,$target_account=false,$target_block,$data_type=false,$data=false,$synchronous=false){
+		if('object'==gettype($key)){
+			if('VIZ\Key'==get_class($key)){
+				$key=$key->encode();
+			}
+			else{
+				return false;
+			}
+		}
+		$tx=new Transaction($endpoint,$key);
+		$previous=0;
+		$account_data=$tx->api->execute_method('get_account',[$account,'VE']);
+		if(false!==$account_data){
+			$previous=$account_data['custom_sequence_block_num'];
+		}
+		else{
+			return false;
+		}
+
+		$object=Utils::prepare_voice_event($previous,$event_type);
+		$object['b']=(int)$target_block;
+		if($target_account){
+			if($target_account!=$account){
+				$object['a']=$target_account;
+			}
+		}
+		if('e'==$event_type){
+			if((false===$data_type)||('t'===$data_type)){
+				//$object['t']='t';//text as default type
+				$object['d']=Utils::prepare_voice_text_data($data['text'],$data['reply'],$data['share'],$data['beneficiaries']);
+			}
+			if('p'===$data_type){
+				$object['t']='p';//publication type
+				$object['d']=Utils::prepare_voice_publication_data($data['title'],$data['markdown'],$data['description'],$data['image'],$data['reply'],$data['share'],$data['beneficiaries']);
+			}
+		}
+		$tx_data=$tx->custom([],[$account],'VE',json_encode($object));
+		$tx_status=$tx->execute($tx_data['json'],$synchronous);
+		if(!$synchronous){
+			return (false!==$tx_status);
+		}
+		else{
+			return ($tx_status['block_num']?$tx_status['block_num']:false);
+		}
 	}
 	// Base58 encoding/decoding functions - all credits go to https://github.com/stephen-hill/base58php
 	// The MIT License (MIT) Copyright (c) 2014 Stephen Hill <stephen@gatekiller.co.uk>
@@ -301,12 +377,6 @@ class Utils{
 		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
 		$checksum=substr(hash('sha256',hash('sha256',$pubkey_hash,true),true),0,4);
 		return Utils::base58_encode($pubkey_hash.$checksum);
-	}
-
-	function get_public_key_hex(){
-		$private_key=$this->ec->keyFromPrivate($this->hex,'hex',true);
-		//compact/compressed (x03/x02 + x)
-		return $private_key->getPublic(true,'hex');
 	}
 	static function full_pubkey_hex_to_ltc_address($hex,$network_id="\x30"){
 		$pubkey_hash=$network_id.hash('ripemd160',hash('sha256',hex2bin($hex),true),true);
