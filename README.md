@@ -381,6 +381,8 @@ $status=VIZ\Utils::voice_publication('https://api.viz.world/',$private_key,$acco
 var_dump($status);
 ```
 
+Create Voice text object, hide it with Voice Event.
+
 ```php
 <?php
 include('./class/autoloader.php');
