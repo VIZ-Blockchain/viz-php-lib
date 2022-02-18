@@ -57,7 +57,7 @@ class Utils{
 			}
 		}
 		$object=Utils::prepare_voice_text($previous,$text,$reply,$share,$beneficiaries);
-		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
+		$tx_data=$tx->custom([],[$account],'V',json_encode($object,JSON_UNESCAPED_UNICODE));
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
@@ -127,7 +127,7 @@ class Utils{
 			}
 		}
 		$object=Utils::prepare_voice_publication($previous,$title,$markdown,$description,$image,$reply,$share,$beneficiaries);
-		$tx_data=$tx->custom([],[$account],'V',json_encode($object));
+		$tx_data=$tx->custom([],[$account],'V',json_encode($object,JSON_UNESCAPED_UNICODE));
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
@@ -179,7 +179,7 @@ class Utils{
 				$object['d']=Utils::prepare_voice_publication_data($data['title'],$data['markdown'],$data['description'],$data['image'],$data['reply'],$data['share'],$data['beneficiaries']);
 			}
 		}
-		$tx_data=$tx->custom([],[$account],'VE',json_encode($object));
+		$tx_data=$tx->custom([],[$account],'VE',json_encode($object,JSON_UNESCAPED_UNICODE));
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
