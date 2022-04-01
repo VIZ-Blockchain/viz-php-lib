@@ -391,12 +391,65 @@ $private_key='5K...';
 $text='Test text and event from viz-php-lib';
 
 //create Voice object with text type (last attribute is synchronous that returns block num where is transaction was witnessed)
-$object_block_num=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,'New test from viz-php-lib',false,false,false,false,true);
+$object_block_num=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,$text,false,false,false,false,true);
 print 'Object: viz://@'.$account.'/'.$object_block_num.'/';
 
 //hide event
 $event_block_num=VIZ\Utils::voice_event('https://api.viz.world/',$private_key,$account,'h',false,$object_block_num,false,false,true);
-print 'Hide event for this object: viz://@'.$account.'/'.$object_block_num.'/?event='.event_block_num;
+print 'Hide event for this object: viz://@'.$account.'/'.$object_block_num.'/?event='.$event_block_num;
+```
+
+Create Voice text object, check transaction size, split it for `add` Voice Event.
+
+```php
+<?php
+include('./class/autoloader.php');
+$account='test';
+$private_key='5K...';
+$max_size_limit=65280;
+$part_size=1024*10;//10Kb
+
+$long_text='...';//long text more that $max_size_limit bytes
+
+//create Voice object with text type (last attribute is synchronous that returns block num where is transaction was witnessed)
+$tx_prepare=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,$long_text,false/*reply*/,false/*share*/,false/*beneficiaries*/,false/*loop*/,true/*synchronous*/,true/*raw tx*/);
+$tx_length=strlen($tx_prepare['data'])/2;
+if($tx_length<$max_size_limit){
+	$object_block_num=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,$long_text,false/*reply*/,false/*share*/,false/*beneficiaries*/,false/*loop*/,true/*synchronous*/,false/*raw tx*/);
+	if($object_block_num){
+		print 'Object: viz://@'.$account.'/'.$object_block_num.'/';
+	}
+	else{
+		print 'Object error';
+	}
+}
+else{
+	$tx_diff=$tx_length-$max_size_limit;
+	$parts_count=ceil($tx_diff / $part_size);
+
+	$markdown_length=mb_strlen($long_text);
+	$main_part_length=$markdown_length-($parts_count*$part_size);
+	if($main_part_length<0){
+		$main_part_length=$part_size;
+	}
+	$main_part=mb_substr($long_text,0,$main_part_length);
+	$secondary_part=mb_substr($long_text,$main_part_length);
+	$object_block_num=VIZ\Utils::voice_text('https://api.viz.world/',$private_key,$account,$main_part,false/*reply*/,false/*share*/,false/*beneficiaries*/,false/*loop*/,true/*synchronous*/,false/*raw tx*/);
+	if($object_block_num){
+		print 'Main object: viz://@'.$account.'/'.$object_block_num.'/'.PHP_EOL;
+		//add event
+		$event_block_num=VIZ\Utils::voice_event('https://api.viz.world/',$private_key,$account,'a',false,$object_block_num,false/*data_type*/,['t'=>$secondary_part]/*data*/,true/*synchronous*/,false/*raw tx*/);
+		if($event_block_num){
+			print 'Add event for this object: viz://@'.$account.'/'.$object_block_num.'/?event='.$event_block_num;
+		}
+		else{
+			print 'Event error';
+		}
+	}
+	else{
+		print 'Object error';
+	}
+}
 ```
 
 May VIZ be with you.

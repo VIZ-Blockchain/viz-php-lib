@@ -33,7 +33,7 @@ class Utils{
 		];
 		return $object;
 	}
-	static function voice_text($endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false){
+	static function voice_text($endpoint,$key,$account,$text,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false,$return_raw=false){
 		if('object'==gettype($key)){
 			if('VIZ\Key'==get_class($key)){
 				$key=$key->encode();
@@ -58,6 +58,11 @@ class Utils{
 		}
 		$object=Utils::prepare_voice_text($previous,$text,$reply,$share,$beneficiaries);
 		$tx_data=$tx->custom([],[$account],'V',json_encode($object,JSON_UNESCAPED_UNICODE));
+
+		if($return_raw){
+			return $tx_data;
+		}
+
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
@@ -103,7 +108,7 @@ class Utils{
 		];
 		return $object;
 	}
-	static function voice_publication($endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false){
+	static function voice_publication($endpoint,$key,$account,$title,$markdown,$description,$image,$reply=false,$share=false,$beneficiaries=false,$loop=false,$synchronous=false,$return_raw=false){
 		if('object'==gettype($key)){
 			if('VIZ\Key'==get_class($key)){
 				$key=$key->encode();
@@ -128,6 +133,11 @@ class Utils{
 		}
 		$object=Utils::prepare_voice_publication($previous,$title,$markdown,$description,$image,$reply,$share,$beneficiaries);
 		$tx_data=$tx->custom([],[$account],'V',json_encode($object,JSON_UNESCAPED_UNICODE));
+
+		if($return_raw){
+			return $tx_data;
+		}
+
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
@@ -143,7 +153,7 @@ class Utils{
 		];
 		return $object;
 	}
-	static function voice_event($endpoint,$key,$account,$event_type,$target_account=false,$target_block,$data_type=false,$data=false,$synchronous=false){
+	static function voice_event($endpoint,$key,$account,$event_type,$target_account=false,$target_block,$data_type=false,$data=false,$synchronous=false,$return_raw=false){
 		if('object'==gettype($key)){
 			if('VIZ\Key'==get_class($key)){
 				$key=$key->encode();
@@ -169,7 +179,7 @@ class Utils{
 				$object['a']=$target_account;
 			}
 		}
-		if('e'==$event_type){
+		if('e'==$event_type){//edit
 			if((false===$data_type)||('t'===$data_type)){
 				//$object['t']='t';//text as default type
 				$object['d']=Utils::prepare_voice_text_data($data['text'],$data['reply'],$data['share'],$data['beneficiaries']);
@@ -179,7 +189,15 @@ class Utils{
 				$object['d']=Utils::prepare_voice_publication_data($data['title'],$data['markdown'],$data['description'],$data['image'],$data['reply'],$data['share'],$data['beneficiaries']);
 			}
 		}
+		if('a'==$event_type){//add
+			$object['d']=$data;
+		}
 		$tx_data=$tx->custom([],[$account],'VE',json_encode($object,JSON_UNESCAPED_UNICODE));
+
+		if($return_raw){
+			return $tx_data;
+		}
+
 		$tx_status=$tx->execute($tx_data['json'],$synchronous);
 		if(!$synchronous){
 			return (false!==$tx_status);
