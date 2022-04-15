@@ -26,7 +26,7 @@ class Auth{
 		$data_arr=explode(':',$data);//domain:action:account:authority:unixtime:nonce
 
 		$time=time();
-		if($fix_server_timezone){
+		if($this->fix_server_timezone){
 			$time-=(new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime());
 		}
 		$start_time=$time - $this->range;
