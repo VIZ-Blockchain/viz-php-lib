@@ -66,31 +66,51 @@ class Transaction{
 		if(!$dgp['head_block_number']){
 			return false;
 		}
-		$tapos_block_num=$dgp['head_block_number'] - 5;
-		$ref_block_num=($tapos_block_num) & 0xFFFF;
-		$ref_block_num_bin=bin2hex(pack('S',$ref_block_num));
-
-		$tapos_block=$tapos_block_num+1;
-		$tapos_block_info=false;
-		$api_count=0;
-		while(!$tapos_block_info){
-			$tapos_block_info=$this->api->execute_method('get_block_header',array($tapos_block));
-			if(!$this->api->return_only_result){
-				$tapos_block_info=$tapos_block_info['result'];
+		$need_tapos_block=true;
+		$ref_block_num='';
+		$ref_block_num_bin='';
+		$ref_block_prefix='';
+		$ref_block_prefix_bin_nice='';
+		if(isset($dgp['last_irreversible_block_ref_num'])){
+			if(0!=$dgp['last_irreversible_block_ref_num']){
+				$need_tapos_block=false;
+				$ref_block_num=$dgp['last_irreversible_block_ref_num'];
+				$ref_block_num_bin=bin2hex(pack('S',$ref_block_num));
+				$ref_block_prefix=$dgp['last_irreversible_block_ref_prefix'];
+				$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin(dechex($ref_block_prefix))));
 			}
-			if(!$tapos_block_info){
-				$api_count++;
-				if($api_count>5){
-					return false;
+		}
+
+		if($need_tapos_block){
+			//old way: tapos block is 5 blocks behind the head block
+			//$tapos_block_num=$dgp['head_block_number'] - 5;
+			//best way: stick to the irreversible block
+			$tapos_block_num=$dgp['last_irreversible_block_num'];
+			$ref_block_num=($tapos_block_num) & 0xFFFF;
+			$ref_block_num_bin=bin2hex(pack('S',$ref_block_num));
+
+			$tapos_block=$tapos_block_num+1;
+			$tapos_block_info=false;
+			$api_count=0;
+			while(!$tapos_block_info){
+				$tapos_block_info=$this->api->execute_method('get_block_header',array($tapos_block));
+				if(!$this->api->return_only_result){
+					$tapos_block_info=$tapos_block_info['result'];
+				}
+				if(!$tapos_block_info){
+					$api_count++;
+					if($api_count>5){
+						return false;
+					}
 				}
 			}
+			if(!isset($tapos_block_info['previous'])){
+				return false;
+			}
+			$ref_block_prefix_bin=bin2hex(strrev(substr(hex2bin($tapos_block_info['previous']),4,4)));
+			$ref_block_prefix=hexdec($ref_block_prefix_bin);
+			$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin($ref_block_prefix_bin)));
 		}
-		if(!isset($tapos_block_info['previous'])){
-			return false;
-		}
-		$ref_block_prefix_bin=bin2hex(strrev(substr(hex2bin($tapos_block_info['previous']),4,4)));
-		$ref_block_prefix=hexdec($ref_block_prefix_bin);
-		$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin($ref_block_prefix_bin)));
 
 		$tx_extension='00';
 
