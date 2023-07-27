@@ -50,6 +50,8 @@ class JsonRpc{
 		/* Blocks and transactions */
 		'get_block'=>'database_api',
 		'get_block_header'=>'database_api',
+		'get_irreversible_block'=>'database_api',
+		'get_irreversible_block_header'=>'database_api',
 		'set_block_applied_callback'=>'database_api',
 		'get_chain_properties'=>'database_api',
 		'get_config'=>'database_api',
