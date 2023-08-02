@@ -747,6 +747,32 @@ class Transaction{
 		$raw.=$this->encode_array($beneficiaries,[['string','int16']]);
 		return [$json,$raw];
 	}
+	function build_fixed_award($initiator,$receiver,$reward_amount,$max_energy,$custom_sequence=0,$memo='',$beneficiaries=[]){
+		$json='["fixed_award",{';
+		$json.='"initiator":"'.$initiator.'"';
+		$json.=',"receiver":"'.$receiver.'"';
+		$json.=',"reward_amount":"'.$reward_amount.'"';
+		$json.=',"max_energy":'.$max_energy;
+		$json.=',"custom_sequence":'.$custom_sequence;
+		$json.=',"memo":"'.$memo.'"';
+		$json.=',"beneficiaries":[';
+		$beneficiaries_arr=[];
+		foreach($beneficiaries as $beneficiary_arr){
+			$beneficiaries_arr[]='{"account":"'.$beneficiary_arr[0].'","weight":'.$beneficiary_arr[1].'}';
+		}
+		$json.=implode(',',$beneficiaries_arr);
+		$json.=']';
+		$json.='}]';
+		$raw='3c';//operation number is 60
+		$raw.=$this->encode_string($initiator);
+		$raw.=$this->encode_string($receiver);
+		$raw.=$this->encode_asset($reward_amount);
+		$raw.=$this->encode_int($max_energy,2);
+		$raw.=$this->encode_int($custom_sequence,8);
+		$raw.=$this->encode_string($memo);
+		$raw.=$this->encode_array($beneficiaries,[['string','int16']]);
+		return [$json,$raw];
+	}
 	function build_create_invite($creator,$balance,$invite_key){
 		$json='["create_invite",{';
 		$json.='"creator":"'.$creator.'"';
@@ -1114,6 +1140,22 @@ class Transaction{
 		$raw='36';//operation number is 54
 		$raw.=$this->encode_string($account);
 		$raw.=$this->encode_string($account_seller);
+		$raw.=$this->encode_asset($account_offer_price);
+		$raw.=$this->encode_bool($account_on_sale);
+		return [$json,$raw];
+	}
+	function build_target_account_sale($account,$account_seller,$target_buyer,$account_offer_price,$account_on_sale){
+		$json='["target_account_sale",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"account_seller":"'.$account_seller.'"';
+		$json.=',"target_buyer":"'.$target_buyer.'"';
+		$json.=',"account_offer_price":"'.$account_offer_price.'"';
+		$json.=',"account_on_sale":'.($account_on_sale?'true':'false').'';
+		$json.='}]';
+		$raw='3d';//operation number is 61
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($account_seller);
+		$raw.=$this->encode_string($target_buyer);
 		$raw.=$this->encode_asset($account_offer_price);
 		$raw.=$this->encode_bool($account_on_sale);
 		return [$json,$raw];

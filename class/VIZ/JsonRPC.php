@@ -63,6 +63,7 @@ class JsonRpc{
 		'get_account_count'=>'database_api',
 		'get_accounts'=>'database_api',
 		'get_accounts_on_sale'=>'database_api',
+		'get_accounts_on_auction'=>'database_api',
 		'get_escrow'=>'database_api',
 		'get_expiring_vesting_delegations'=>'database_api',
 		'get_owner_history'=>'database_api',
