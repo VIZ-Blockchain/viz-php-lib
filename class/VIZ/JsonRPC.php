@@ -1,7 +1,7 @@
 <?php
 namespace VIZ;
 
-class JsonRpc{
+class JsonRPC{
 	public $endpoint='';
 	public $debug=false;
 	public $request_arr=array();
