@@ -66,6 +66,7 @@ class JsonRPC{
 		'get_accounts_on_auction'=>'database_api',
 		'get_escrow'=>'database_api',
 		'get_expiring_vesting_delegations'=>'database_api',
+		'get_master_history'=>'database_api',
 		'get_owner_history'=>'database_api',
 		'get_recovery_request'=>'database_api',
 		'get_subaccounts_on_sale'=>'database_api',
@@ -118,6 +119,19 @@ class JsonRPC{
 		'get_witnesses_by_counted_vote'=>'witness_api',
 		'get_witnesses_by_vote'=>'witness_api',
 		'lookup_witness_accounts'=>'witness_api',
+
+		//block_info
+		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/block_info/block_info_plugin.cpp
+		'get_block_info'=>'block_info',
+		'get_blocks_with_info'=>'block_info',
+
+		//raw_block
+		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/raw_block/plugin.cpp
+		'get_raw_block'=>'raw_block',
+
+		//auth_util
+		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/auth_util/plugin.cpp
+		'check_authority_signature'=>'auth_util',
 	);
 	function get_url($url,$post=array(),$debug=false){
 		$this->last_url=$url;

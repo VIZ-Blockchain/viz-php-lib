@@ -989,6 +989,48 @@ class Transaction{
 		$raw.=$this->encode_string($invite_secret);
 		return [$json,$raw];
 	}
+	function build_chain_properties_update($owner,$props){
+		$default_props=[
+			'account_creation_fee'=>'1.000 VIZ',
+			'maximum_block_size'=>65536,
+			'create_account_delegation_ratio'=>10,
+			'create_account_delegation_time'=>2592000,
+			'min_delegation'=>'1.000 VIZ',
+			'min_curation_percent'=>0,
+			'max_curation_percent'=>10000,
+			'bandwidth_reserve_percent'=>0,
+			'bandwidth_reserve_below'=>'0.000000 SHARES',
+			'flag_energy_additional_cost'=>0,
+			'vote_accounting_min_rshares'=>100000,
+			'committee_request_approve_min_percent'=>1000,
+		];
+		$props_types=[
+			'account_creation_fee'=>'asset',
+			'maximum_block_size'=>'uint32',
+			'create_account_delegation_ratio'=>'uint32',
+			'create_account_delegation_time'=>'uint32',
+			'min_delegation'=>'asset',
+			'min_curation_percent'=>'int16',
+			'max_curation_percent'=>'int16',
+			'bandwidth_reserve_percent'=>'int16',
+			'bandwidth_reserve_below'=>'asset',
+			'flag_energy_additional_cost'=>'int16',
+			'vote_accounting_min_rshares'=>'uint32',
+			'committee_request_approve_min_percent'=>'int16',
+		];
+		$json='["chain_properties_update",{';
+		$json.='"owner":"'.$owner.'"';
+		$new_props=$default_props;
+		foreach($props as $prop=>$value){
+			$new_props[$prop]=$value;
+		}
+		$json.=',"props":'.json_encode($new_props).'';
+		$json.='}]';
+		$raw='19';//operation number is 25
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_array($new_props,$props_types,true);
+		return [$json,$raw];
+	}
 	function build_versioned_chain_properties_update($owner,$props){
 		$version=3;
 		$default_props=[
