@@ -11,6 +11,13 @@
 - [composer.json](file://composer.json)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Added documentation for new JSON-RPC API methods: `get_master_history`, `get_block_info`, `get_blocks_with_info`, `get_raw_block`, and `check_authority_signature`
+- Updated plugin routing mechanism section to reflect new specialized plugin integrations
+- Enhanced API specifications with expanded method coverage
+- Updated practical examples to include new method usage patterns
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -25,6 +32,8 @@
 
 ## Introduction
 This document provides comprehensive API documentation for the VIZ\JsonRPC class, focusing on connection management, HTTP/HTTPS and WebSocket support, method execution patterns, plugin routing mechanisms, request/response handling, and error management. It also covers endpoint configuration, SSL/TLS setup, timeout handling, authentication methods, and response parsing. Practical examples demonstrate common RPC operations, error handling strategies, and integration patterns with transaction execution and authentication workflows.
+
+**Updated** Added documentation for new specialized VIZ node plugin methods including master account history tracking, block information retrieval, raw block data access, and authority signature verification.
 
 ## Project Structure
 The VIZ PHP library organizes blockchain-related functionality into cohesive classes under the VIZ namespace. The JsonRPC class handles low-level JSON-RPC communication with VIZ nodes, while higher-level classes like Transaction and Auth integrate with JsonRPC for building and broadcasting transactions and performing authentication checks.
@@ -46,8 +55,8 @@ UT --> TX
 ```
 
 **Diagram sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L354)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1-L157)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L368)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1-L1458)
 - [Auth.php](file://class/VIZ/Auth.php#L1-L70)
 - [Key.php](file://class/VIZ/Key.php#L1-L353)
 - [Utils.php](file://class/VIZ/Utils.php#L1-L413)
@@ -64,8 +73,8 @@ UT --> TX
 - Utils: Utility functions for Voice protocol posts, encryption, encoding, and other helpers.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L354)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1-L157)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L368)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1-L1458)
 - [Auth.php](file://class/VIZ/Auth.php#L1-L70)
 - [Key.php](file://class/VIZ/Key.php#L1-L353)
 - [Utils.php](file://class/VIZ/Utils.php#L1-L413)
@@ -90,7 +99,7 @@ JR-->>App : "Parsed result or false"
 ```
 
 **Diagram sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L258-L353)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L325-L368)
 
 ## Detailed Component Analysis
 
@@ -121,8 +130,15 @@ JR-->>App : "Parsed result or false"
   - return_only_result: Controls whether to return only the result field or the full JSON-RPC response.
   - read_timeout: Socket read timeout in seconds.
 
+**Updated** Enhanced plugin routing mechanism to include new specialized VIZ node plugins for master account tracking, block information retrieval, raw block access, and authority signature verification.
+
 Plugin Routing Mechanism
 - The class maintains a mapping from method names to plugin namespaces. When building a JSON-RPC call, it selects the appropriate plugin based on this mapping.
+- **New Specialized Plugins**:
+  - `database_api`: Now includes `get_master_history` for tracking master account changes
+  - `block_info`: New plugin for block metadata and information retrieval
+  - `raw_block`: New plugin for accessing raw block data
+  - `auth_util`: New plugin for authority signature verification
 
 Endpoint Configuration
 - HTTP/HTTPS: Use http:// or https:// URLs. The class detects scheme and sets port accordingly (80 for HTTP, 443 for HTTPS).
@@ -149,7 +165,7 @@ Integration Patterns
 - Auth: Uses JsonRPC to fetch account details and verify authority weights.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L354)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L368)
 
 ### Connection Management
 - Hostname Resolution: Hostnames are resolved once and cached to reduce DNS overhead.
@@ -157,7 +173,7 @@ Integration Patterns
 - SSL Context: Stream context is created with peer_name and verification options based on check_ssl.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L169-L195)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L187-L209)
 
 ### HTTP/HTTPS and WebSocket Support
 - HTTP: Scheme detection sets port 80 and sends plain TCP requests.
@@ -165,7 +181,7 @@ Integration Patterns
 - WebSocket: wss:// is treated like HTTPS with SSL/TLS.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L175-L187)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L189-L201)
 
 ### Method Execution Patterns
 - Raw vs Structured Parameters:
@@ -175,7 +191,7 @@ Integration Patterns
   - The api mapping associates each method with a plugin namespace. Calls are routed accordingly during JSON-RPC construction.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L258-L310)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L272-L324)
 
 ### Request/Response Handling
 - Header Parsing: Extracts headers and body, handles Transfer-Encoding: chunked and Content-Encoding: gzip.
@@ -183,7 +199,8 @@ Integration Patterns
 - Result Extraction: In simple mode, returns only the result field; in extended mode, returns the full JSON-RPC object.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L251-L353)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L248-L271)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L325-L368)
 
 ### Error Management
 - Socket Errors: Returns false when stream_socket_client fails.
@@ -192,8 +209,8 @@ Integration Patterns
 - Missing Result: Returns false if the result field is absent in the response.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L196-L217)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L332-L352)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L210-L231)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L346-L367)
 
 ### Authentication Integration
 - Passwordless Authentication:
@@ -256,8 +273,8 @@ JsonRPC <.. Auth : "used by"
 ```
 
 **Diagram sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L354)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1-L157)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L368)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1-L1458)
 - [Auth.php](file://class/VIZ/Auth.php#L1-L70)
 
 ## Detailed Component Analysis
@@ -272,16 +289,21 @@ JsonRPC <.. Auth : "used by"
 **Section sources**
 - [JsonRPC.php](file://class/VIZ/JsonRPC.php#L17-L22)
 - [JsonRPC.php](file://class/VIZ/JsonRPC.php#L23-L28)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L122-L222)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L251-L257)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L258-L310)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L311-L353)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L136-L236)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L248-L271)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L272-L324)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L325-L368)
 
 ### Plugin Routing Mechanism
 - The api mapping defines which plugin namespace each method belongs to. During JSON-RPC construction, the class selects the appropriate plugin based on this mapping.
+- **Enhanced Method Coverage**:
+  - Database API: Comprehensive account and blockchain data access
+  - Block Info API: New specialized methods for block metadata
+  - Raw Block API: Direct block data access
+  - Auth Util API: Authority signature verification
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L29-L121)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L29-L135)
 
 ### Request/Response Flow
 
@@ -302,7 +324,7 @@ ReturnFull --> End
 ```
 
 **Diagram sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L311-L353)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L325-L368)
 
 ## Dependency Analysis
 - JsonRPC depends on PHP streams for networking and basic JSON decoding.
@@ -320,8 +342,8 @@ UT["Utils"] --> TX
 ```
 
 **Diagram sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L354)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1-L157)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L1-L368)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1-L1458)
 - [Auth.php](file://class/VIZ/Auth.php#L1-L70)
 - [Key.php](file://class/VIZ/Key.php#L1-L353)
 - [Utils.php](file://class/VIZ/Utils.php#L1-L413)
@@ -335,8 +357,6 @@ UT["Utils"] --> TX
 - Chunked transfer handling avoids memory issues with large payloads.
 - Read timeout prevents indefinite blocking on slow or unresponsive nodes.
 
-[No sources needed since this section provides general guidance]
-
 ## Troubleshooting Guide
 Common Issues and Resolutions:
 - Socket Timeout: Increase read_timeout or switch to a closer node.
@@ -346,14 +366,14 @@ Common Issues and Resolutions:
 - Redirects: The class follows Location headers automatically.
 
 **Section sources**
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L196-L217)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L223-L233)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L332-L352)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L210-L231)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L237-L247)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L346-L367)
 
 ## Conclusion
 The VIZ\JsonRPC class offers a robust foundation for interacting with VIZ nodes, supporting HTTP/HTTPS and WebSocket endpoints, SSL/TLS verification, and flexible request/response handling. Its integration with Transaction and Auth enables end-to-end workflows for building, signing, and broadcasting transactions and for passwordless authentication. Proper configuration of endpoints, SSL settings, and timeouts ensures reliable operation across diverse environments.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** The recent additions of specialized plugin methods significantly expand the library's capabilities for advanced blockchain data access, enabling sophisticated applications for master account monitoring, block analysis, and authority verification workflows.
 
 ## Appendices
 
@@ -361,6 +381,11 @@ The VIZ\JsonRPC class offers a robust foundation for interacting with VIZ nodes,
 - Basic API Call: Initialize JsonRPC with an endpoint and call get_dynamic_global_properties.
 - Extended Mode: Switch return_only_result to false to receive full JSON-RPC responses including errors.
 - Authentication Workflow: Generate signed authentication data with Key and validate it with Auth using JsonRPC to fetch account details.
+- **New Specialized Methods**:
+  - Master History Tracking: Use `get_master_history` to monitor master account changes
+  - Block Information Retrieval: Use `get_block_info` and `get_blocks_with_info` for block metadata
+  - Raw Block Access: Use `get_raw_block` for direct block data extraction
+  - Authority Verification: Use `check_authority_signature` for signature validation
 
 **Section sources**
 - [README.md](file://README.md#L69-L95)
@@ -379,9 +404,15 @@ The VIZ\JsonRPC class offers a robust foundation for interacting with VIZ nodes,
 - Authentication:
   - Domain, action, authority, and time-based nonce are included in signed data.
   - On-chain authority thresholds are verified via get_account.
+- **New Specialized Methods**:
+  - `get_master_history`: Database API method for master account history tracking
+  - `get_block_info`: Block info API method for individual block metadata
+  - `get_blocks_with_info`: Block info API method for batch block metadata retrieval
+  - `get_raw_block`: Raw block API method for direct block data access
+  - `check_authority_signature`: Auth util API method for signature verification
 
 **Section sources**
 - [JsonRPC.php](file://class/VIZ/JsonRPC.php#L14-L16)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L189-L195)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L189-L209)
 - [Auth.php](file://class/VIZ/Auth.php#L25-L69)
 - [Key.php](file://class/VIZ/Key.php#L339-L352)

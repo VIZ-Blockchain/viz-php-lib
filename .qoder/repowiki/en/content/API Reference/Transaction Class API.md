@@ -10,6 +10,13 @@
 - [README.md](file://README.md)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Added documentation for new chain property update methods: `build_chain_properties_update` and `build_versioned_chain_properties_update`
+- Updated Operation Builders section to include the new chain property update operations
+- Enhanced parameter specifications and return value documentation for the new methods
+- Added comprehensive examples demonstrating chain property update transaction construction
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -23,7 +30,7 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for the VIZ Transaction class, focusing on constructing blockchain transactions, adding operations, handling TAPoS (Transaction as Proof-of-Stake), managing expiration, supporting multi-signatures, and executing transactions via JSON-RPC. It covers constructor parameters, transaction building methods, operation builders for transfers, account creation, proposals, and custom operations, along with queue-based processing, raw data encoding, and integration patterns with Key and JsonRPC classes.
+This document provides comprehensive API documentation for the VIZ Transaction class, focusing on constructing blockchain transactions, adding operations, handling TAPoS (Transaction as Proof-of-Stake), managing expiration, supporting multi-signatures, and executing transactions via JSON-RPC. It covers constructor parameters, transaction building methods, operation builders for transfers, account creation, proposals, custom operations, and **newly added chain property update operations**, along with queue-based processing, raw data encoding, and integration patterns with Key and JsonRPC classes.
 
 ## Project Structure
 The VIZ PHP library organizes core functionality into focused classes:
@@ -71,7 +78,7 @@ AUTH --> KEY
 - Auth class: Verifies passwordless authentication requests
 
 Key responsibilities:
-- Transaction: TAPoS resolution, expiration calculation, raw data encoding, multi-signature aggregation, broadcast execution
+- Transaction: TAPoS resolution, expiration calculation, raw data encoding, multi-signature aggregation, broadcast execution, **chain property updates**
 - Key: Signing, verification, public key derivation, memo encryption/decryption
 - JsonRPC: Endpoint configuration, method routing, result parsing, error handling
 - Utils: VLQ encoding, Base58 encoding/decoding, AES-256-CBC encryption/decryption
@@ -97,7 +104,7 @@ participant Node as "VIZ Node"
 Client->>Tx : Constructor(endpoint, private_key)
 Tx->>RPC : Initialize with endpoint
 Tx->>Key : Import private key(s)
-Client->>Tx : Operation builder (e.g., award, transfer)
+Client->>Tx : Operation builder (e.g., award, transfer, chain_properties_update)
 Tx->>Tx : Build operation JSON and raw data
 Tx->>RPC : get_dynamic_global_properties()
 RPC-->>Tx : DGP (head/last irreversible blocks)
@@ -185,7 +192,7 @@ Error handling:
 - Returns false if TAPoS resolution fails during build phase
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1310-L1328)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1352-L1370)
 
 ### Transaction Building and Signing
 Method:
@@ -272,7 +279,7 @@ Error handling:
 - encode_int handles padding and endianness for fixed-width integers
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1329-L1415)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1371-L1458)
 
 ### Operation Builders
 
@@ -458,32 +465,80 @@ Error handling:
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L980-L990)
 
+#### Chain Properties Update
+- Method: build_chain_properties_update(owner, props)
+- Parameters:
+  - owner: Account owner of the chain properties update
+  - props: Array of property-value pairs to update
+- Property defaults and types:
+  - account_creation_fee: asset ('1.000 VIZ')
+  - maximum_block_size: uint32 (65536)
+  - create_account_delegation_ratio: uint32 (10)
+  - create_account_delegation_time: uint32 (2592000)
+  - min_delegation: asset ('1.000 VIZ')
+  - min_curation_percent: int16 (0)
+  - max_curation_percent: int16 (10000)
+  - bandwidth_reserve_percent: int16 (0)
+  - bandwidth_reserve_below: asset ('0.000000 SHARES')
+  - flag_energy_additional_cost: int16 (0)
+  - vote_accounting_min_rshares: uint32 (100000)
+  - committee_request_approve_min_percent: int16 (1000)
+- Return value: Array of [operation_json, operation_raw]
+
+**Updated** Added comprehensive chain properties update support with default property validation and type checking
+
+**Section sources**
+- [Transaction.php](file://class/VIZ/Transaction.php#L992-L1033)
+
 #### Versioned Chain Properties Update
 - Method: build_versioned_chain_properties_update(owner, props)
 - Parameters:
-  - Owner account and property map
+  - owner: Account owner of the chain properties update
+  - props: Array of property-value pairs to update
+- Version: 3 (hardcoded)
+- Property defaults and types (includes all regular properties plus):
+  - inflation_witness_percent: int16 (2000)
+  - inflation_ratio_committee_vs_reward_fund: int16 (5000)
+  - inflation_recalc_period: uint32 (806400)
+  - data_operations_cost_additional_bandwidth: uint32 (10000)
+  - witness_miss_penalty_percent: int16 (100)
+  - witness_miss_penalty_duration: uint32 (86400)
+  - create_invite_min_balance: asset ('10.000 VIZ')
+  - committee_create_request_fee: asset ('100.000 VIZ')
+  - create_paid_subscription_fee: asset ('100.000 VIZ')
+  - account_on_sale_fee: asset ('10.000 VIZ')
+  - subaccount_on_sale_fee: asset ('100.000 VIZ')
+  - witness_declaration_fee: asset ('10.000 VIZ')
+  - withdraw_intervals: uint16 (28)
 - Return value: Array of [operation_json, operation_raw]
 
+**Updated** Added versioned chain properties update support with comprehensive property validation and version management
+
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L992-L1059)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1034-L1102)
 
 #### Custom Operation
 - Method: build_custom(required_active_auths, required_regular_auths, id, json_str)
 - Parameters:
-  - Authorizations and custom JSON payload
+  - required_active_auths: Array of accounts requiring active authorization
+  - required_regular_auths: Array of accounts requiring regular authorization
+  - id: Operation identifier string
+  - json_str: JSON payload string
 - Return value: Array of [operation_json, operation_raw]
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1061-L1085)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1103-L1128)
 
 #### Witness Update
 - Method: build_witness_update(owner, url, block_signing_key)
 - Parameters:
-  - Witness owner, URL, signing key
+  - owner: Witness owner account
+  - url: Witness website URL
+  - block_signing_key: Block signing public key
 - Return value: Array of [operation_json, operation_raw]
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1087-L1097)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1129-L1140)
 
 #### Paid Subscription Operations
 - Methods: build_set_paid_subscription, build_paid_subscribe
@@ -492,7 +547,7 @@ Error handling:
 - Return value: Array of [operation_json, operation_raw]
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1099-L1131)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1141-L1174)
 
 #### Account and Subaccount Sale Operations
 - Methods: build_set_account_price, build_target_account_sale, build_set_subaccount_price, build_buy_account
@@ -501,7 +556,7 @@ Error handling:
 - Return value: Array of [operation_json, operation_raw]
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1133-L1191)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1175-L1234)
 
 #### Proposal Operations
 - Methods: build_proposal_create, build_proposal_update, build_proposal_delete
@@ -511,9 +566,9 @@ Error handling:
 - Return value: Array of [operation_json, operation_raw]
 
 **Section sources**
-- [Transaction.php](file://class/VIZ/Transaction.php#L1193-L1226)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1228-L1294)
-- [Transaction.php](file://class/VIZ/Transaction.php#L1296-L1307)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1235-L1269)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1270-L1336)
+- [Transaction.php](file://class/VIZ/Transaction.php#L1338-L1349)
 
 ### Additional Methods
 
@@ -538,7 +593,7 @@ Error handling:
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L53-L60)
-- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L91-L96)
+- [JsonRPC.php](file://class/VIZ/JsonRPC.php#L92-L98)
 
 ### Dynamic Operation Builder Invocation
 - Magic method __call(name, attrs):
@@ -614,8 +669,7 @@ Transaction --> JsonRPC : "uses for DGP/TAPoS and broadcast"
 - Multi-signature signing iterates through all private keys; batching operations reduces repeated signing overhead
 - Expiration calculation includes a nonce retry mechanism; ensure sufficient time budget for signing retries
 - Raw data encoding uses fixed-width integers and VLQ; keep operation payloads minimal to reduce transaction size
-
-[No sources needed since this section provides general guidance]
+- **Chain property updates**: Parameter validation and type checking add computational overhead but ensure data integrity
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -624,6 +678,7 @@ Common issues and resolutions:
 - Signature canonical form not found: Increase nonce or adjust signing process; ensure secp256k1 compliance
 - Broadcast errors: Verify endpoint URL, SSL settings, and node availability; check return_only_result flag
 - Authority weight threshold mismatch: Confirm account authorities and weights match expected thresholds
+- **Chain property update failures**: Ensure property names match supported defaults and values are within acceptable ranges
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L117-L144)
@@ -632,9 +687,7 @@ Common issues and resolutions:
 - [JsonRPC.php](file://class/VIZ/JsonRPC.php#L311-L353)
 
 ## Conclusion
-The Transaction class provides a robust, extensible framework for building and executing VIZ blockchain transactions. Its integration with Key and JsonRPC enables secure, efficient transaction construction with multi-signature support, TAPoS handling, and flexible operation builders. Following the patterns outlined here ensures reliable transaction workflows across diverse use cases.
-
-[No sources needed since this section summarizes without analyzing specific files]
+The Transaction class provides a robust, extensible framework for building and executing VIZ blockchain transactions. Its integration with Key and JsonRPC enables secure, efficient transaction construction with multi-signature support, TAPoS handling, and flexible operation builders. **The newly added chain property update capabilities** expand the class's utility for governance operations, enabling programmatic management of blockchain parameters with comprehensive validation and support for both regular and versioned property updates. Following the patterns outlined here ensures reliable transaction workflows across diverse use cases.
 
 ## Appendices
 
@@ -652,3 +705,42 @@ The Transaction class provides a robust, extensible framework for building and e
 - [README.md](file://README.md#L224-L239)
 - [README.md](file://README.md#L241-L283)
 - [README.md](file://README.md#L285-L308)
+
+### Chain Property Update Examples
+
+#### Basic Chain Properties Update
+```php
+// Initialize transaction with endpoint and private key
+$tx = new VIZ\Transaction('https://node.example.com', '5K...your_private_key');
+
+// Define properties to update
+$props = [
+    'account_creation_fee' => '2.000 VIZ',
+    'maximum_block_size' => 131072,
+    'min_curation_percent' => 5000
+];
+
+// Build and execute chain properties update
+$result = $tx->build_chain_properties_update('committee-account', $props);
+echo "Transaction ID: " . $result['id'];
+```
+
+#### Versioned Chain Properties Update
+```php
+// Initialize transaction with endpoint and private key
+$tx = new VIZ\Transaction('https://node.example.com', '5K...your_private_key');
+
+// Define versioned properties to update
+$props = [
+    'inflation_witness_percent' => 2500,
+    'create_invite_min_balance' => '15.000 VIZ',
+    'witness_miss_penalty_percent' => 200
+];
+
+// Build and execute versioned chain properties update
+$result = $tx->build_versioned_chain_properties_update('committee-account', $props);
+echo "Versioned Transaction ID: " . $result['id'];
+```
+
+**Section sources**
+- [Transaction.php](file://class/VIZ/Transaction.php#L992-L1102)
