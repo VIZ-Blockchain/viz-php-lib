@@ -131,7 +131,33 @@ gate.api.getAccount('myaccount', '', function(err, response) {
 });
 ```
 
-#### PHP Example
+#### PHP Example (using VIZ\DNS helper)
+
+```php
+use VIZ\DNS;
+use VIZ\Transaction;
+
+$tx = new Transaction($endpoint, $regular_private_key);
+
+// Get existing metadata to preserve other fields
+$account_data = $tx->api->execute_method('get_accounts', [['myaccount']]);
+$existing_metadata = $account_data[0]['json_metadata'] ?? '{}';
+
+// Build NS records using helper
+$records = [
+    DNS::create_a_record('188.120.231.153'),
+    DNS::create_ssl_record('4a4613daef37cbc5c4a5156cd7b24ea2e6ee2e5f1e7461262a2df2b63cbf17e2'),
+];
+
+// Prepare metadata JSON (merges with existing)
+$metadata_json = DNS::prepare_metadata_json($records, DNS::DEFAULT_TTL, $existing_metadata);
+
+// Execute transaction
+$tx_data = $tx->account_metadata('myaccount', $metadata_json);
+$result = $tx->execute($tx_data['json']);
+```
+
+#### PHP Example (manual - without helper)
 
 ```php
 $tx = new Transaction($chain_id);
@@ -245,7 +271,36 @@ gate.api.getAccount('on1x', '', function(err, response) {
 });
 ```
 
-### Parse NS Data (PHP)
+### Parse NS Data (PHP using VIZ\DNS helper)
+
+```php
+use VIZ\DNS;
+use VIZ\JsonRPC;
+
+$api = new JsonRPC($endpoint);
+
+// Get NS data directly from account
+$ns_data = DNS::get_account_ns($api, 'on1x');
+
+if ($ns_data !== false) {
+    // Get all A records
+    $a_records = DNS::get_a_records($ns_data);
+    foreach ($a_records as $ip) {
+        echo "IPv4: $ip" . PHP_EOL;
+    }
+    
+    // Get SSL hash
+    $ssl_hash = DNS::get_ssl_hash($ns_data);
+    if ($ssl_hash !== null) {
+        echo "SSL Hash: $ssl_hash" . PHP_EOL;
+    }
+    
+    // Get TTL
+    echo "TTL: " . $ns_data['ttl'] . PHP_EOL;
+}
+```
+
+### Parse NS Data (PHP manual)
 
 ```php
 $api = new JsonRPC($endpoint);
@@ -272,6 +327,133 @@ if ($accounts && count($accounts) > 0) {
         echo "TTL: " . $metadata['ttl'] . PHP_EOL;
     }
 }
+```
+
+---
+
+## PHP Helper Class (VIZ\DNS)
+
+The `VIZ\DNS` class provides convenient methods for working with NS records. Located at `class/VIZ/DNS.php`.
+
+### Constants
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `DEFAULT_TTL` | 28800 | Default TTL in seconds (8 hours) |
+| `RECORD_A` | 'A' | A record type identifier |
+| `RECORD_TXT` | 'TXT' | TXT record type identifier |
+| `SSL_PREFIX` | 'ssl=' | SSL hash prefix in TXT records |
+| `MAX_TXT_LENGTH` | 256 | Maximum TXT record length |
+
+### Building NS Data
+
+```php
+use VIZ\DNS;
+
+// Simple configuration (single IP)
+$ns = DNS::build_simple_ns('188.120.231.153');
+
+// With SSL hash
+$ns = DNS::build_simple_ns('188.120.231.153', 'your-ssl-hash-here');
+
+// Round Robin (multiple IPs)
+$ns = DNS::build_round_robin_ns(
+    ['188.120.231.153', '192.168.1.100', '10.0.0.50'],
+    'ssl-hash',
+    3600  // custom TTL
+);
+
+// Manual record creation
+$records = [
+    DNS::create_a_record('188.120.231.153'),
+    DNS::create_ssl_record('hash'),
+    DNS::create_txt_record('custom=value'),
+];
+$ns = DNS::build_ns_data($records, DNS::DEFAULT_TTL);
+```
+
+### Parsing NS Data
+
+```php
+// Parse from JSON metadata string
+$ns_data = DNS::parse_ns_data($json_metadata);
+
+// Get from account directly
+$ns_data = DNS::get_account_ns($api, 'account_name');
+
+// Extract specific records
+$ips = DNS::get_a_records($ns_data);       // ['188.120.231.153', ...]
+$hash = DNS::get_ssl_hash($ns_data);        // 'hash...' or null
+$txts = DNS::get_txt_records($ns_data);     // ['ssl=hash', 'custom=value']
+```
+
+### Metadata Management
+
+```php
+// Merge NS into existing metadata (preserves other fields)
+$updated = DNS::merge_ns_into_metadata($existing_metadata, $records, $ttl);
+
+// Remove NS from metadata
+$cleaned = DNS::remove_ns_from_metadata($existing_metadata);
+
+// Prepare escaped JSON for transaction
+$json = DNS::prepare_metadata_json($records, DNS::DEFAULT_TTL, $existing_metadata);
+```
+
+### Validation
+
+```php
+// Validate individual values
+DNS::validate_ipv4('192.168.1.1');          // true/false
+DNS::validate_ssl_hash('64-char-hex...');   // true/false
+DNS::validate_txt_length($value);            // true/false
+
+// Validate all records
+$result = DNS::validate_records($records);
+// ['valid' => true/false, 'errors' => [...]]
+```
+
+### SSL Verification
+
+```php
+// Get SSL hash from remote server
+$result = DNS::get_ssl_hash_from_server('domain.com', '192.168.1.1');
+if ($result['error'] === false) {
+    echo $result['result']['hash'];
+}
+
+// Verify SSL against blockchain records
+$result = DNS::verify_ssl($api, 'account_name', '192.168.1.1');
+// ['valid' => bool, 'error' => string|null, 'expected' => hash, 'actual' => hash]
+```
+
+### Complete Example
+
+```php
+use VIZ\DNS;
+use VIZ\Transaction;
+
+$tx = new Transaction('https://node.viz.cx/', $private_key);
+
+// 1. Get current metadata
+$account = $tx->api->execute_method('get_accounts', [['myaccount']]);
+$existing = $account[0]['json_metadata'] ?? '{}';
+
+// 2. Build and validate records
+$records = [
+    DNS::create_a_record('188.120.231.153'),
+    DNS::create_ssl_record('4a4613daef37cbc5c4a5156cd7b24ea2e6ee2e5f1e7461262a2df2b63cbf17e2'),
+];
+
+$validation = DNS::validate_records($records);
+if (!$validation['valid']) {
+    die('Invalid records: ' . implode(', ', $validation['errors']));
+}
+
+// 3. Prepare and broadcast transaction
+$metadata_json = DNS::prepare_metadata_json($records, DNS::DEFAULT_TTL, $existing);
+$tx_data = $tx->account_metadata('myaccount', $metadata_json);
+$result = $tx->execute($tx_data['json']);
 ```
 
 ---
@@ -320,7 +502,32 @@ echo | openssl s_client -servername example.com -connect 188.120.231.153:443 2>/
   openssl x509 -pubkey -nocert | sha256sum
 ```
 
-### PHP Implementation for SSL Verification
+### PHP Implementation for SSL Verification (using VIZ\DNS helper)
+
+```php
+use VIZ\DNS;
+use VIZ\JsonRPC;
+
+$api = new JsonRPC('https://node.viz.cx/');
+
+// Get SSL hash from remote server
+$result = DNS::get_ssl_hash_from_server('on1x', '188.120.231.153');
+if ($result['error'] === false) {
+    echo "SSL Hash: " . $result['result']['hash'] . PHP_EOL;
+}
+
+// Verify SSL against blockchain records
+$verification = DNS::verify_ssl($api, 'on1x', '188.120.231.153');
+if ($verification['valid']) {
+    echo "SSL Certificate VERIFIED" . PHP_EOL;
+} else {
+    echo "SSL Verification FAILED: " . $verification['error'] . PHP_EOL;
+    echo "Expected: " . $verification['expected'] . PHP_EOL;
+    echo "Actual: " . $verification['actual'] . PHP_EOL;
+}
+```
+
+### PHP Implementation for SSL Verification (manual - without helper)
 
 ```php
 /**
@@ -380,7 +587,7 @@ function get_ssl_hash($domain, $ipv4 = null) {
 }
 ```
 
-### Complete SSL Verification Process
+### Complete SSL Verification Process (manual - without helper)
 
 ```php
 /**
@@ -564,6 +771,10 @@ openssl x509 -in /etc/letsencrypt/live/on1x.com/fullchain.pem -noout -startdate 
 ### Transaction Builder
 - **PHP**: [class/VIZ/Transaction.php](file:///d:/Work/viz.world/backup-16-11-2024/control.viz.world/class/VIZ/Transaction.php#L665-L675) - `build_account_metadata()` method
 
+### viz-php-lib DNS Helper
+- **PHP Helper Class**: [class/VIZ/DNS.php](file:///d:/Work/viz-php-lib/class/VIZ/DNS.php) - `VIZ\DNS` class
+- **Usage Examples**: [scripts/dns_example.php](file:///d:/Work/viz-php-lib/scripts/dns_example.php) - Comprehensive examples
+
 ---
 
 ## Summary
@@ -576,5 +787,6 @@ openssl x509 -in /etc/letsencrypt/live/on1x.com/fullchain.pem -noout -startdate 
 | **Authority** | Regular key |
 | **Hash Algorithm** | SHA256 of PEM-encoded public key |
 | **Default TTL** | 28800 seconds (8 hours) |
+| **PHP Helper** | `VIZ\DNS` class in viz-php-lib |
 
 This system provides a decentralized, blockchain-based alternative to traditional DNS with built-in SSL certificate verification capabilities.
