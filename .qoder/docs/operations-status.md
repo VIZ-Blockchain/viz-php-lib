@@ -1,6 +1,6 @@
 # VIZ PHP Library — Operations Implementation Status
 
-**Status Date:** 03.03.2026
+**Status Date:** 16.05.2026
 **Reference:** viz-cpp-node documentation
 
 ---
@@ -20,8 +20,8 @@
 | Recovery Operations | 3 | 3 | 0 | 0 |
 | Subscription Operations | 2 | 2 | 0 | 0 |
 | Transfer & Vesting Operations | 5 | 5 | 0 | 0 |
-| Witness Operations | 5 | 5 | 0 | 0 |
-| **TOTAL** | **42** | **39** | **0** | **3** |
+| Witness Operations | 6 | 6 | 0 | 0 |
+| **TOTAL** | **43** | **40** | **0** | **3** |
 
 **Coverage:** 100% of non-deprecated operations implemented
 
@@ -84,7 +84,8 @@
 | 7 | `account_witness_vote_operation` | `build_account_witness_vote()` | ✅ Implemented | |
 | 8 | `account_witness_proxy_operation` | `build_account_witness_proxy()` | ✅ Implemented | |
 | 25 | `chain_properties_update_operation` | `build_chain_properties_update()` | ✅ Implemented | Added 03.03.2026 |
-| 46 | `versioned_chain_properties_update_operation` | `build_versioned_chain_properties_update()` | ✅ Implemented | |
+| 46 | `versioned_chain_properties_update_operation` | `build_versioned_chain_properties_update()` | ✅ Implemented | Updated to v4 (HF13) |
+| 64 | `set_reward_sharing_operation` | `build_set_reward_sharing()` | ✅ Implemented | HF13 |
 
 ---
 
@@ -98,7 +99,12 @@
 
 ---
 
-## Recently Added (03.03.2026)
+## Recently Added (16.05.2026)
+
+- `set_reward_sharing_operation` (ID 64) — HF13 validator stakeholder reward sharing rate
+- `versioned_chain_properties_update_operation` updated to v4 (HF13) — adds `distribution_epoch_length`
+
+## Added (03.03.2026)
 
 - `chain_properties_update_operation` (ID 25) — basic chain properties update for witnesses
 
@@ -158,7 +164,7 @@ $tx->execute($result['json']);
 
 # JSON-RPC API Coverage
 
-**Status Date:** 03.03.2026
+**Status Date:** 16.05.2026
 **Reference:** viz-cpp-node plugins documentation
 
 ---

@@ -1032,7 +1032,7 @@ class Transaction{
 		return [$json,$raw];
 	}
 	function build_versioned_chain_properties_update($owner,$props){
-		$version=3;
+		$version=4;
 		$default_props=[
 			'account_creation_fee'=>'1.000 VIZ',
 			'maximum_block_size'=>65536,
@@ -1059,6 +1059,7 @@ class Transaction{
 			'subaccount_on_sale_fee'=>'100.000 VIZ',
 			'witness_declaration_fee'=>'10.000 VIZ',
 			'withdraw_intervals'=>28,
+			'distribution_epoch_length'=>28800,
 		];
 		$props_types=[
 			'account_creation_fee'=>'asset',
@@ -1085,7 +1086,8 @@ class Transaction{
 			'account_on_sale_fee'=>'asset',
 			'subaccount_on_sale_fee'=>'asset',
 			'witness_declaration_fee'=>'asset',
-			'withdraw_intervals'=>'uint16'
+			'withdraw_intervals'=>'uint16',
+			'distribution_epoch_length'=>'uint32',
 		];
 		$json='["versioned_chain_properties_update",{';
 		$json.='"owner":"'.$owner.'"';
@@ -1200,6 +1202,16 @@ class Transaction{
 		$raw.=$this->encode_string($target_buyer);
 		$raw.=$this->encode_asset($account_offer_price);
 		$raw.=$this->encode_bool($account_on_sale);
+		return [$json,$raw];
+	}
+	function build_set_reward_sharing($owner,$sharing_rate){
+		$json='["set_reward_sharing",{';
+		$json.='"owner":"'.$owner.'"';
+		$json.=',"sharing_rate":'.$sharing_rate;
+		$json.='}]';
+		$raw='40';//operation number is 64
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_uint16($sharing_rate);
 		return [$json,$raw];
 	}
 	function build_set_subaccount_price($account,$subaccount_seller,$subaccount_offer_price,$subaccount_on_sale){

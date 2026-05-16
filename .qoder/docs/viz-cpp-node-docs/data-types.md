@@ -162,6 +162,7 @@ A static variant holding one of the chain property versions. The variant is seri
 | 1 | `chain_properties_hf4` |
 | 2 | `chain_properties_hf6` |
 | 3 | `chain_properties_hf9` |
+| 4 | `chain_properties_hf13` |
 
 Example (hf9 = index 3):
 ```json
@@ -240,6 +241,12 @@ Example (hf9 = index 3):
 | `subaccount_on_sale_fee` | `asset` (VIZ) | Fee to list subaccounts for sale |
 | `witness_declaration_fee` | `asset` (VIZ) | Fee to declare as witness |
 | `withdraw_intervals` | `uint16_t` | Number of withdraw intervals |
+
+## Additional fields in `chain_properties_hf13`
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `distribution_epoch_length` | `uint32_t` | 28800 | Blocks per stakeholder reward distribution epoch (1 day at 3-second blocks) |
 
 ---
 
@@ -320,3 +327,4 @@ The `operation` is a `static_variant`. When serialized, it is a 2-element array:
 | 61 | `target_account_sale_operation` |
 | 62 | `bid_operation` *(virtual)* |
 | 63 | `outbid_operation` *(virtual)* |
+| 64 | `set_reward_sharing_operation` |

@@ -250,3 +250,42 @@ Assigns a proxy account for witness voting. All existing votes are removed when 
 - [ ] Proxy chains are resolved (A→B→C); max depth is limited
 - [ ] Setting a proxy removes all direct witness votes
 - [ ] Sign with `account`'s active key
+
+---
+
+## `set_reward_sharing_operation`
+
+**Type ID:** `64`
+**Required authority:** `active` of `owner`
+**Since:** HF13
+
+Sets the validator's stakeholder reward sharing rate. The specified fraction of each block reward is accumulated and distributed to the accounts that voted for this validator at the end of each distribution epoch (every `distribution_epoch_length` blocks). Distributed as TOKEN (VIZ); recipients receive SHARES after `create_vesting()` conversion.
+
+### Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `owner` | `account_name_type` | Validator account name |
+| `sharing_rate` | `uint16_t` | Basis points: 0 = 0%, 10000 = 100% |
+
+### JSON Example
+
+```json
+[64, {
+  "owner": "alice",
+  "sharing_rate": 5000
+}]
+```
+
+### PHP Example
+
+```php
+$result = $tx->set_reward_sharing('alice', 5000);
+$tx->execute($result['json']);
+```
+
+### Checklist
+- [ ] `sharing_rate` is in basis points: 0–10000 (0%–100%)
+- [ ] Account must have a registered `witness_object`
+- [ ] Operation is rejected if chain has not yet reached HF13
+- [ ] Sign with `owner`'s active key
