@@ -31,12 +31,14 @@
 
 ## Introduction
 This document explains governance operations on the VIZ blockchain as implemented in the library, focusing on:
-- Witness voting via account_witness_vote
-- Proxy voting via account_witness_proxy
+- Validator voting via account_validator_vote (previously account_witness_vote)
+- Proxy voting via account_validator_proxy (previously account_witness_proxy)
 - Proposal creation and voting via proposal_create and proposal_update
 - Chain properties updates via chain_properties_update and versioned_chain_properties_update
 
 It covers how to calculate voting weights, select proxies, manage proposal lifecycles, update blockchain parameters, and validate authorities. It also provides practical examples for participating in governance through direct voting, proxy delegation, proposal creation, and blockchain parameter updates.
+
+> **Witness → Validator migration:** VIZ blockchain has completed renaming "witness" to "validator". The library provides both `build_validator_*` (new, recommended) and `build_witness_*` (old, backward-compat) methods. New code should use validator names.
 
 ## Project Structure
 The library is organized around cryptographic primitives, JSON-RPC communication, and transaction building. Governance operations are exposed through the Transaction class, which constructs operations and signs transactions. Authority validation for passwordless authentication is handled by the Auth class.
@@ -111,16 +113,17 @@ JR-->>Dev : Result (success/failure)
 
 ## Detailed Component Analysis
 
-### Witness Voting: account_witness_vote
-- Operation: account_witness_vote(account, witness, approve)
-- Purpose: Approve or remove approval for a given witness.
+### Validator Voting: account_validator_vote
+- Operation: account_validator_vote(account, validator, approve)
+- Purpose: Approve or remove approval for a given validator.
 - Behavior: approve=true adds approval; approve=false removes it.
-- Encoding: The operation is built with a numeric operation code and encodes account, witness, and boolean approve flag.
+- Encoding: The operation is built with numeric operation code 7 and encodes account, validator, and boolean approve flag.
+- Backward-compat: account_witness_vote(account, witness, approve) — sends old JSON name; accepted by node.
 
 ```mermaid
 flowchart TD
-Start(["Build Vote Operation"]) --> Params["Provide account, witness, approve"]
-Params --> Build["Encode operation payload"]
+Start(["Build Vote Operation"]) --> Params["Provide account, validator, approve"]
+Params --> Build["Encode operation payload (type 7)"]
 Build --> Sign["Sign transaction"]
 Sign --> Broadcast["Broadcast to node"]
 Broadcast --> End(["Vote recorded"])
@@ -132,16 +135,17 @@ Broadcast --> End(["Vote recorded"])
 **Section sources**
 - [class/VIZ/Transaction.php](file://class/VIZ/Transaction.php#L676-L688)
 
-### Proxy Voting: account_witness_proxy
-- Operation: account_witness_proxy(account, proxy)
-- Purpose: Delegate witness voting power to another account (proxy).
+### Proxy Voting: account_validator_proxy
+- Operation: account_validator_proxy(account, proxy)
+- Purpose: Delegate validator voting power to another account (proxy).
 - Behavior: Setting a proxy replaces any prior proxy for the account.
-- Encoding: Encodes account and proxy strings.
+- Encoding: Encodes account and proxy strings. Operation type 8.
+- Backward-compat: account_witness_proxy(account, proxy) — sends old JSON name; accepted by node.
 
 ```mermaid
 flowchart TD
 Start(["Set Proxy"]) --> Params["Provide account, proxy"]
-Params --> Build["Encode operation payload"]
+Params --> Build["Encode operation payload (type 8)"]
 Build --> Sign["Sign transaction"]
 Sign --> Broadcast["Broadcast to node"]
 Broadcast --> End(["Proxy active"])
@@ -164,8 +168,8 @@ Broadcast --> End(["Proxy active"])
 #### Versioned Chain Properties Update: versioned_chain_properties_update
 - Operation: versioned_chain_properties_update(owner, props)
 - Purpose: Update blockchain parameters with versioned property values.
-- Version: Currently set to 3, indicating the version of the property structure.
-- Extended Properties: Includes all regular properties plus inflation parameters, witness penalties, fees, and additional governance parameters.
+- Version: Currently set to 4 (HF13).
+- Extended Properties: Includes all regular properties plus inflation parameters, validator penalties, fees, and additional governance parameters. Field names use new `validator_*` naming.
 - Encoding: Adds version prefix to property structure with comprehensive type validation.
 
 ```mermaid
@@ -174,8 +178,8 @@ Start(["Chain Properties Update"]) --> Type{"Operation Type"}
 Type --> |Regular| Regular["chain_properties_update"]
 Type --> |Versioned| Versioned["versioned_chain_properties_update"]
 Regular --> Props["Default Properties"]
-Versioned --> Version["Version 3"]
-Versioned --> ExtendedProps["Extended Properties"]
+Versioned --> Version["Version 4 (HF13)"]
+Versioned --> ExtendedProps["Extended Properties\n(validator_* field names)"]
 Props --> Encode["Encode Property Structure"]
 ExtendedProps --> Encode
 Version --> Encode
@@ -250,17 +254,17 @@ Deny --> End
 - [class/VIZ/Auth.php](file://class/VIZ/Auth.php#L1-L70)
 
 ### Voting Weight Calculations and Proxy Selection
-- Voting weight: Determined by account's VESTS delegated to it (directly or via proxy). The library exposes operations to set proxies and vote for witnesses; the actual weight calculation is performed by the blockchain based on delegated stake.
-- Proxy selection: Choose a trusted account that aligns with your governance preferences. Use account_witness_proxy to delegate voting power.
-- Direct voting: Use account_witness_vote with approve=true to support a witness; approve=false to remove support.
+- Voting weight: Determined by account's VESTS delegated to it (directly or via proxy). The library exposes operations to set proxies and vote for validators; the actual weight calculation is performed by the blockchain based on delegated stake.
+- Proxy selection: Choose a trusted account that aligns with your governance preferences. Use account_validator_proxy to delegate voting power.
+- Direct voting: Use account_validator_vote with approve=true to support a validator; approve=false to remove support.
 
 ```mermaid
 flowchart TD
 Start(["Select Governance Path"]) --> Direct["Direct Voting"]
 Start --> Proxy["Proxy Voting"]
 Start --> ChainProps["Chain Properties Update"]
-Direct --> Vote["account_witness_vote(approve=true/false)"]
-Proxy --> SetProxy["account_witness_proxy(proxy)"]
+Direct --> Vote["account_validator_vote(approve=true/false)"]
+Proxy --> SetProxy["account_validator_proxy(proxy)"]
 ChainProps --> Regular["chain_properties_update"]
 ChainProps --> Versioned["versioned_chain_properties_update"]
 Vote --> End(["Voting Power Applied"])
@@ -317,10 +321,13 @@ UTILS["Utils.php"] -.-> TX
 
 ## Conclusion
 This library provides a complete toolkit for VIZ governance participation:
-- Direct voting with account_witness_vote
-- Proxy delegation with account_witness_proxy
+- Direct validator voting with account_validator_vote (type 7)
+- Proxy delegation with account_validator_proxy (type 8)
+- Validator registration with validator_update (type 6)
 - Proposal creation, updates, and deletion
-- Chain properties updates with both regular and versioned variants
+- Chain properties updates with both regular and versioned variants (version 4, HF13)
 - Authority validation for secure operations
 
-By combining these operations with proper authority management and careful proposal lifecycle planning, participants can effectively influence blockchain governance and parameter modifications. The addition of chain properties update operations enhances the library's capability to support community-driven governance initiatives and parameter adjustments.
+Backward-compatible methods (`build_witness_update`, `build_account_witness_vote`, `build_account_witness_proxy`) remain available for interoperability with older code. New code should use the `validator_*` variants.
+
+By combining these operations with proper authority management and careful proposal lifecycle planning, participants can effectively influence blockchain governance and parameter modifications.

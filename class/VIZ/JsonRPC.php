@@ -120,6 +120,16 @@ class JsonRPC{
 		'get_witnesses_by_vote'=>'witness_api',
 		'lookup_witness_accounts'=>'witness_api',
 
+		//validator_api (renamed from witness_api)
+		'get_active_validators'=>'validator_api',
+		'get_validator_by_account'=>'validator_api',
+		'get_validator_count'=>'validator_api',
+		'get_validator_schedule'=>'validator_api',
+		'get_validators'=>'validator_api',
+		'get_validators_by_counted_vote'=>'validator_api',
+		'get_validators_by_vote'=>'validator_api',
+		'lookup_validator_accounts'=>'validator_api',
+
 		//block_info
 		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/block_info/block_info_plugin.cpp
 		'get_block_info'=>'block_info',
@@ -322,6 +332,16 @@ class JsonRPC{
 		}
 		return $result;
 	}
+	static $validator_fallback=array(
+		'get_active_validators'=>'get_active_witnesses',
+		'get_validator_by_account'=>'get_witness_by_account',
+		'get_validator_count'=>'get_witness_count',
+		'get_validator_schedule'=>'get_witness_schedule',
+		'get_validators'=>'get_witnesses',
+		'get_validators_by_counted_vote'=>'get_witnesses_by_counted_vote',
+		'get_validators_by_vote'=>'get_witnesses_by_vote',
+		'lookup_validator_accounts'=>'lookup_witness_accounts',
+	);
 	function execute_method($method,$params=array(),$debug=false){
 		if(!is_array($params)){
 			$jsonrpc_query=$this->raw_method($method,$params);
@@ -330,6 +350,10 @@ class JsonRPC{
 			$jsonrpc_query=$this->build_method($method,$params);
 		}
 		if(false===$jsonrpc_query){//not actual api method
+			//try fallback to old witness method name for older nodes
+			if(isset(self::$validator_fallback[$method])){
+				return $this->execute_method(self::$validator_fallback[$method],$params,$debug);
+			}
 			$result=false;
 		}
 		else{
@@ -344,6 +368,10 @@ class JsonRPC{
 				print '<!-- RESULT: '.$result.' -->'.PHP_EOL;
 			}
 			if(false===strpos($header," 200 OK\r\n")){//check server status code
+				//try fallback to old witness method name for older nodes
+				if(isset(self::$validator_fallback[$method])){
+					return $this->execute_method(self::$validator_fallback[$method],$params,$debug);
+				}
 				return false;//server code error
 			}
 			$result_arr=json_decode($result,true);

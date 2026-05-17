@@ -134,11 +134,24 @@ JR-->>App : "Parsed result or false"
 
 Plugin Routing Mechanism
 - The class maintains a mapping from method names to plugin namespaces. When building a JSON-RPC call, it selects the appropriate plugin based on this mapping.
-- **New Specialized Plugins**:
-  - `database_api`: Now includes `get_master_history` for tracking master account changes
-  - `block_info`: New plugin for block metadata and information retrieval
-  - `raw_block`: New plugin for accessing raw block data
-  - `auth_util`: New plugin for authority signature verification
+- **Specialized Plugins**:
+  - `database_api`: Includes `get_master_history` for tracking master account changes
+  - `block_info`: Plugin for block metadata and information retrieval
+  - `raw_block`: Plugin for accessing raw block data
+  - `auth_util`: Plugin for authority signature verification
+
+**Witness → Validator API Migration:**
+- Both `witness_api` (old) and `validator_api` (new) method sets are registered.
+- New names (`get_active_validators`, `get_validator_by_account`, etc.) use `validator_api` plugin.
+- Old names (`get_active_witnesses`, `get_witness_by_account`, etc.) use `witness_api` plugin (still available).
+- When a `validator_api` method fails (node not yet upgraded), `execute_method` automatically retries with the corresponding `witness_api` fallback method. No application code changes needed.
+
+```php
+// Always use new names — automatic fallback handles old nodes:
+$validators = $api->execute_method('get_active_validators');
+$schedule   = $api->execute_method('get_validator_schedule');
+$info       = $api->execute_method('get_validator_by_account', ['alice']);
+```
 
 Endpoint Configuration
 - HTTP/HTTPS: Use http:// or https:// URLs. The class detects scheme and sets port accordingly (80 for HTTP, 443 for HTTPS).
@@ -296,11 +309,13 @@ JsonRPC <.. Auth : "used by"
 
 ### Plugin Routing Mechanism
 - The api mapping defines which plugin namespace each method belongs to. During JSON-RPC construction, the class selects the appropriate plugin based on this mapping.
-- **Enhanced Method Coverage**:
+- **Method Coverage**:
   - Database API: Comprehensive account and blockchain data access
-  - Block Info API: New specialized methods for block metadata
+  - Block Info API: Methods for block metadata
   - Raw Block API: Direct block data access
   - Auth Util API: Authority signature verification
+  - Witness API (old): `get_active_witnesses`, `get_witness_by_account`, etc. — remain registered for backward compat
+  - Validator API (new): `get_active_validators`, `get_validator_by_account`, etc. — registered alongside; auto-fallback to witness_api when validator_api not available
 
 **Section sources**
 - [JsonRPC.php](file://class/VIZ/JsonRPC.php#L29-L135)

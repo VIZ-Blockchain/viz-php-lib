@@ -20,7 +20,7 @@
 | Recovery Operations | 3 | 3 | 0 | 0 |
 | Subscription Operations | 2 | 2 | 0 | 0 |
 | Transfer & Vesting Operations | 5 | 5 | 0 | 0 |
-| Witness Operations | 6 | 6 | 0 | 0 |
+| Witness / Validator Operations | 6 | 6 | 0 | 0 |
 | **TOTAL** | **43** | **40** | **0** | **3** |
 
 **Coverage:** 100% of non-deprecated operations implemented
@@ -79,10 +79,13 @@
 | 4 | `withdraw_vesting_operation` | `build_withdraw_vesting()` | ✅ Implemented | |
 | 11 | `set_withdraw_vesting_route_operation` | `build_set_withdraw_vesting_route()` | ✅ Implemented | |
 | 19 | `delegate_vesting_shares_operation` | `build_delegate_vesting_shares()` | ✅ Implemented | |
-| **Witness Operations** |||||
-| 6 | `witness_update_operation` | `build_witness_update()` | ✅ Implemented | |
-| 7 | `account_witness_vote_operation` | `build_account_witness_vote()` | ✅ Implemented | |
-| 8 | `account_witness_proxy_operation` | `build_account_witness_proxy()` | ✅ Implemented | |
+| **Witness / Validator Operations** |||||
+| 6 | `witness_update_operation` | `build_witness_update()` | ✅ Implemented | Alias: `build_validator_update()` emits `validator_update` |
+| 6 | `validator_update_operation` | `build_validator_update()` | ✅ Implemented | New name for type 6, same binary format |
+| 7 | `account_witness_vote_operation` | `build_account_witness_vote()` | ✅ Implemented | Alias: `build_account_validator_vote()` emits `account_validator_vote` |
+| 7 | `account_validator_vote_operation` | `build_account_validator_vote()` | ✅ Implemented | New name for type 7, same binary format |
+| 8 | `account_witness_proxy_operation` | `build_account_witness_proxy()` | ✅ Implemented | Alias: `build_account_validator_proxy()` emits `account_validator_proxy` |
+| 8 | `account_validator_proxy_operation` | `build_account_validator_proxy()` | ✅ Implemented | New name for type 8, same binary format |
 | 25 | `chain_properties_update_operation` | `build_chain_properties_update()` | ✅ Implemented | Added 03.03.2026 |
 | 46 | `versioned_chain_properties_update_operation` | `build_versioned_chain_properties_update()` | ✅ Implemented | Updated to v4 (HF13) |
 | 64 | `set_reward_sharing_operation` | `build_set_reward_sharing()` | ✅ Implemented | HF13 |
@@ -171,11 +174,12 @@ $tx->execute($result['json']);
 
 ## API Summary
 
-| Plugin | Total Methods | Implemented | Status |
+| plugin | Total Methods | Implemented | Status |
 |--------|---------------|-------------|--------|
 | database_api | 31 | 31 | ✅ Complete |
 | network_broadcast_api | 4 | 4 | ✅ Complete |
 | witness_api | 8 | 8 | ✅ Complete |
+| validator_api | 8 | 8 | ✅ Complete |
 | account_by_key | 1 | 1 | ✅ Complete |
 | account_history | 1 | 1 | ✅ Complete |
 | operation_history | 2 | 2 | ✅ Complete |
@@ -190,9 +194,8 @@ $tx->execute($result['json']);
 | tags | 15 | 0 | ⚠️ Deprecated |
 | social_network | 12 | 0 | ⚠️ Deprecated |
 | private_message | 2 | 0 | ⚠️ Deprecated |
-| auth_util | 1 | 0 | ⚠️ Deprecated |
 | debug_node | 8 | 0 | 🔧 Dev only |
-| **TOTAL (non-deprecated)** | **63** | **63** | **100%** |
+| **TOTAL (non-deprecated)** | **71** | **71** | **100%** |
 
 ---
 
@@ -256,6 +259,21 @@ $tx->execute($result['json']);
 | `get_witnesses_by_counted_vote` | ✅ |
 | `get_witness_count` | ✅ |
 | `lookup_witness_accounts` | ✅ |
+
+### validator_api (8 methods) ✅
+
+Renamed from `witness_api`. Uses `validator_api` plugin name on new nodes; automatically falls back to `witness_api` methods on older nodes.
+
+| Method | Status | Fallback |
+|--------|--------|----------|
+| `get_active_validators` | ✅ | → `get_active_witnesses` |
+| `get_validator_schedule` | ✅ | → `get_witness_schedule` |
+| `get_validators` | ✅ | → `get_witnesses` |
+| `get_validator_by_account` | ✅ | → `get_witness_by_account` |
+| `get_validators_by_vote` | ✅ | → `get_witnesses_by_vote` |
+| `get_validators_by_counted_vote` | ✅ | → `get_witnesses_by_counted_vote` |
+| `get_validator_count` | ✅ | → `get_witness_count` |
+| `lookup_validator_accounts` | ✅ | → `lookup_witness_accounts` |
 
 ### account_by_key (1 method) ✅
 
@@ -375,7 +393,111 @@ These plugins are deprecated or content-related (VIZ moved away from content mod
 ## API Legend
 
 | Symbol | Meaning |
-|--------|--------|
+|--------|----------|
 | ✅ | Fully implemented |
 | ⚠️ | Deprecated (not implementing by design) |
 | 🔧 | Development/testing only |
+
+---
+
+## Witness → Validator Migration (Phase B — Node Upgraded)
+
+**Added:** 17.05.2026
+**Updated:** 17.05.2026 — node upgrade complete, all renames live
+
+The VIZ blockchain has completed renaming "witness" → "validator" across the entire stack. This library (Phase B) sends new names and keeps backward-compat receivers for old names in operation history.
+
+### Operation Builders
+
+Both old and new method names are supported. New names emit new JSON; old names emit old JSON for historical compatibility.
+
+| Old Method | New Method | JSON Name Emitted | Type ID |
+|------------|------------|-------------------|---------|
+| `build_witness_update()` | `build_validator_update()` | `validator_update` | 6 |
+| `build_account_witness_vote()` | `build_account_validator_vote()` | `account_validator_vote` | 7 |
+| `build_account_witness_proxy()` | `build_account_validator_proxy()` | `account_validator_proxy` | 8 |
+
+Usage via `__call` magic method:
+```php
+$tx->validator_update($owner, $url, $key);          // new name (recommended)
+$tx->account_validator_vote($account, $validator);  // new name (recommended)
+$tx->account_validator_proxy($account, $proxy);     // new name (recommended)
+// Old names still work for backward compat:
+$tx->witness_update($owner, $url, $key);
+$tx->account_witness_vote($account, $witness);
+$tx->account_witness_proxy($account, $proxy);
+```
+
+### Field Rename in `account_validator_vote` (type 7)
+
+`build_account_validator_vote($account, $validator, $approve)` emits field `"validator"`. The old `build_account_witness_vote($account, $witness, $approve)` still emits `"witness"`. The node accepts both.
+
+### Chain Properties Field Renames
+
+`build_versioned_chain_properties_update()` uses new field names:
+
+| Old Field | New Field | Struct |
+|-----------|-----------|--------|
+| `inflation_witness_percent` | `inflation_validator_percent` | `chain_properties_hf4` |
+| `witness_miss_penalty_percent` | `validator_miss_penalty_percent` | `chain_properties_hf6` |
+| `witness_miss_penalty_duration` | `validator_miss_penalty_duration` | `chain_properties_hf6` |
+| `witness_declaration_fee` | `validator_declaration_fee` | `chain_properties_hf9` |
+
+### API Method Fallback
+
+New `validator_api` method names are tried first; falls back to `witness_api` on older nodes automatically.
+
+```php
+$result = $rpc->execute_method('get_active_validators');  // tries validator_api, falls back to witness_api
+$result = $rpc->execute_method('get_active_witnesses');   // direct old method (still works)
+```
+
+### Node Response Field Renames (library relays raw JSON — no code changes needed)
+
+After node upgrade the following response field names changed. Library users must update field access in their application code:
+
+**Block header** (`get_block`, `get_block_header`):
+
+| Old Field | New Field |
+|-----------|-----------|
+| `witness` | `validator` |
+| `witness_signature` | `validator_signature` |
+
+**Dynamic global properties** (`get_dynamic_global_properties`):
+
+| Old Field | New Field |
+|-----------|-----------|
+| `current_witness` | `current_validator` |
+
+**Account object** (`get_accounts`):
+
+| Old Field | New Field |
+|-----------|-----------|
+| `witnesses_voted_for` | `validators_voted_for` |
+| `witnesses_vote_weight` | `validators_vote_weight` |
+| `witness_votes` | `validator_votes` |
+
+**Validator schedule object** (`get_validator_schedule`):
+
+| Old Field | New Field |
+|-----------|-----------|
+| `current_shuffled_witnesses` | `current_shuffled_validators` |
+| `num_scheduled_witnesses` | `num_scheduled_validators` |
+
+**`get_config` response keys**:
+
+| Old Key | New Key |
+|---------|---------|
+| `CHAIN_HARDFORK_REQUIRED_WITNESSES` | `CHAIN_HARDFORK_REQUIRED_VALIDATORS` |
+| `CHAIN_MAX_ACCOUNT_WITNESS_VOTES` | `CHAIN_MAX_ACCOUNT_VALIDATOR_VOTES` |
+| `CHAIN_MAX_WITNESSES` | `CHAIN_MAX_VALIDATORS` |
+| `CHAIN_MAX_SUPPORT_WITNESSES` | `CHAIN_MAX_SUPPORT_VALIDATORS` |
+| `CHAIN_MAX_TOP_WITNESSES` | `CHAIN_MAX_TOP_VALIDATORS` |
+| `CHAIN_MAX_WITNESS_URL_LENGTH` | `CHAIN_MAX_VALIDATOR_URL_LENGTH` |
+
+### What Never Changes
+
+- Integer type IDs (6, 7, 8, 30, 42) — binary wire format uses integer indices
+- Binary serialization — struct field order preserved, names not written to binary
+- Field names `block_signing_key`, `url`, `approve`, `proxy`, `shares`, `owner`
+- Virtual operations (`shutdown_validator` type 30, `validator_reward` type 42) — chain-generated, not submitted by users

@@ -384,13 +384,15 @@ Error handling:
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L665-L674)
 
-#### Account Witness Vote
-- Method: build_account_witness_vote(account, witness, approve=true)
+#### Validator Vote
+- Method: build_account_validator_vote(account, validator, approve=true)
 - Parameters:
   - account: Voter account
-  - witness: Witness to vote for
+  - validator: Validator to vote for
   - approve: Boolean approval
 - Return value: Array of [operation_json, operation_raw]
+- Emits JSON name: `account_validator_vote`, field: `"validator"`
+- Backward-compat: build_account_witness_vote(account, witness, approve=true) — emits old name `account_witness_vote`
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L676-L687)
@@ -405,12 +407,14 @@ Error handling:
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L689-L698)
 
-#### Account Witness Proxy
-- Method: build_account_witness_proxy(account, proxy)
+#### Validator Proxy
+- Method: build_account_validator_proxy(account, proxy)
 - Parameters:
   - account: Account setting proxy
   - proxy: Proxy account
 - Return value: Array of [operation_json, operation_raw]
+- Emits JSON name: `account_validator_proxy`
+- Backward-compat: build_account_witness_proxy(account, proxy) — emits old name `account_witness_proxy`
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L700-L709)
@@ -495,24 +499,23 @@ Error handling:
 - Parameters:
   - owner: Account owner of the chain properties update
   - props: Array of property-value pairs to update
-- Version: 3 (hardcoded)
+- Version: 4 (HF13)
 - Property defaults and types (includes all regular properties plus):
-  - inflation_witness_percent: int16 (2000)
+  - inflation_validator_percent: int16 (2000)
   - inflation_ratio_committee_vs_reward_fund: int16 (5000)
   - inflation_recalc_period: uint32 (806400)
   - data_operations_cost_additional_bandwidth: uint32 (10000)
-  - witness_miss_penalty_percent: int16 (100)
-  - witness_miss_penalty_duration: uint32 (86400)
+  - validator_miss_penalty_percent: int16 (100)
+  - validator_miss_penalty_duration: uint32 (86400)
   - create_invite_min_balance: asset ('10.000 VIZ')
   - committee_create_request_fee: asset ('100.000 VIZ')
   - create_paid_subscription_fee: asset ('100.000 VIZ')
   - account_on_sale_fee: asset ('10.000 VIZ')
   - subaccount_on_sale_fee: asset ('100.000 VIZ')
-  - witness_declaration_fee: asset ('10.000 VIZ')
+  - validator_declaration_fee: asset ('10.000 VIZ')
   - withdraw_intervals: uint16 (28)
+  - distribution_epoch_length: uint32 (28800)
 - Return value: Array of [operation_json, operation_raw]
-
-**Updated** Added versioned chain properties update support with comprehensive property validation and version management
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L1034-L1102)
@@ -529,13 +532,15 @@ Error handling:
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L1103-L1128)
 
-#### Witness Update
-- Method: build_witness_update(owner, url, block_signing_key)
+#### Validator Update
+- Method: build_validator_update(owner, url, block_signing_key)
 - Parameters:
-  - owner: Witness owner account
-  - url: Witness website URL
+  - owner: Validator owner account
+  - url: Validator website URL
   - block_signing_key: Block signing public key
 - Return value: Array of [operation_json, operation_raw]
+- Emits JSON name: `validator_update` (type 6)
+- Backward-compat: build_witness_update(owner, url, block_signing_key) — emits old name `witness_update`
 
 **Section sources**
 - [Transaction.php](file://class/VIZ/Transaction.php#L1129-L1140)
@@ -730,11 +735,12 @@ echo "Transaction ID: " . $result['id'];
 // Initialize transaction with endpoint and private key
 $tx = new VIZ\Transaction('https://node.example.com', '5K...your_private_key');
 
-// Define versioned properties to update
+// Define versioned properties to update (version 4 / HF13 field names)
 $props = [
-    'inflation_witness_percent' => 2500,
+    'inflation_validator_percent' => 2500,
     'create_invite_min_balance' => '15.000 VIZ',
-    'witness_miss_penalty_percent' => 200
+    'validator_miss_penalty_percent' => 200,
+    'validator_declaration_fee' => '10.000 VIZ',
 ];
 
 // Build and execute versioned chain properties update

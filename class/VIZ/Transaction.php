@@ -1046,18 +1046,18 @@ class Transaction{
 			'flag_energy_additional_cost'=>0,
 			'vote_accounting_min_rshares'=>100000,
 			'committee_request_approve_min_percent'=>1000,
-			'inflation_witness_percent'=>2000,
+			'inflation_validator_percent'=>2000,
 			'inflation_ratio_committee_vs_reward_fund'=>5000,
 			'inflation_recalc_period'=>806400,
 			'data_operations_cost_additional_bandwidth'=>10000,
-			'witness_miss_penalty_percent'=>100,
-			'witness_miss_penalty_duration'=>86400,
+			'validator_miss_penalty_percent'=>100,
+			'validator_miss_penalty_duration'=>86400,
 			'create_invite_min_balance'=>'10.000 VIZ',
 			'committee_create_request_fee'=>'100.000 VIZ',
 			'create_paid_subscription_fee'=>'100.000 VIZ',
 			'account_on_sale_fee'=>'10.000 VIZ',
 			'subaccount_on_sale_fee'=>'100.000 VIZ',
-			'witness_declaration_fee'=>'10.000 VIZ',
+			'validator_declaration_fee'=>'10.000 VIZ',
 			'withdraw_intervals'=>28,
 			'distribution_epoch_length'=>28800,
 		];
@@ -1074,18 +1074,18 @@ class Transaction{
 			'flag_energy_additional_cost'=>'int16',
 			'vote_accounting_min_rshares'=>'uint32',
 			'committee_request_approve_min_percent'=>'int16',
-			'inflation_witness_percent'=>'int16',
+			'inflation_validator_percent'=>'int16',
 			'inflation_ratio_committee_vs_reward_fund'=>'int16',
 			'inflation_recalc_period'=>'uint32',
 			'data_operations_cost_additional_bandwidth'=>'uint32',
-			'witness_miss_penalty_percent'=>'int16',
-			'witness_miss_penalty_duration'=>'uint32',
+			'validator_miss_penalty_percent'=>'int16',
+			'validator_miss_penalty_duration'=>'uint32',
 			'create_invite_min_balance'=>'asset',
 			'committee_create_request_fee'=>'asset',
 			'create_paid_subscription_fee'=>'asset',
 			'account_on_sale_fee'=>'asset',
 			'subaccount_on_sale_fee'=>'asset',
-			'witness_declaration_fee'=>'asset',
+			'validator_declaration_fee'=>'asset',
 			'withdraw_intervals'=>'uint16',
 			'distribution_epoch_length'=>'uint32',
 		];
@@ -1126,6 +1126,42 @@ class Transaction{
 		$raw.=$this->encode_array($required_regular_auths,'string');
 		$raw.=$this->encode_string($id);
 		$raw.=$this->encode_string($json_str);
+		return [$json,$raw];
+	}
+	function build_validator_update($owner,$url,$block_signing_key){
+		$json='["validator_update",{';
+		$json.='"owner":"'.$owner.'"';
+		$json.=',"url":"'.$url.'"';
+		$json.=',"block_signing_key":"'.$block_signing_key.'"';
+		$json.='}]';
+		$raw='06';//operation number is 6
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_string($url);
+		$raw.=$this->encode_public_key($block_signing_key);
+		return [$json,$raw];
+	}
+	function build_account_validator_vote($account,$validator,$approve=true){
+		$json='["account_validator_vote",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"validator":"'.$validator.'"';
+		$json.=',"approve":'.($approve?'true':'false').'';
+		$json.='}]';
+
+		$raw='07';//operation number is 7
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($validator);
+		$raw.=$this->encode_bool($approve);
+		return [$json,$raw];
+	}
+	function build_account_validator_proxy($account,$proxy){
+		$json='["account_validator_proxy",{';
+		$json.='"account":"'.$account.'"';
+		$json.=',"proxy":"'.$proxy.'"';
+		$json.='}]';
+
+		$raw='08';//operation number is 8
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($proxy);
 		return [$json,$raw];
 	}
 	function build_witness_update($owner,$url,$block_signing_key){
