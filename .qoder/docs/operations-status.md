@@ -178,8 +178,7 @@ $tx->execute($result['json']);
 |--------|---------------|-------------|--------|
 | database_api | 31 | 31 | ✅ Complete |
 | network_broadcast_api | 4 | 4 | ✅ Complete |
-| witness_api | 8 | 8 | ✅ Complete |
-| validator_api | 8 | 8 | ✅ Complete |
+| validator_api / witness_api | 16 | 16 | ✅ Complete |
 | account_by_key | 1 | 1 | ✅ Complete |
 | account_history | 1 | 1 | ✅ Complete |
 | operation_history | 2 | 2 | ✅ Complete |
@@ -195,7 +194,7 @@ $tx->execute($result['json']);
 | social_network | 12 | 0 | ⚠️ Deprecated |
 | private_message | 2 | 0 | ⚠️ Deprecated |
 | debug_node | 8 | 0 | 🔧 Dev only |
-| **TOTAL (non-deprecated)** | **71** | **71** | **100%** |
+| **TOTAL (non-deprecated)** | **79** | **79** | **100%** |
 
 ---
 
@@ -247,33 +246,28 @@ $tx->execute($result['json']);
 | `broadcast_transaction_with_callback` | ✅ |
 | `broadcast_block` | ✅ |
 
-### witness_api (8 methods) ✅
+### validator_api / witness_api (16 methods) ✅
 
-| Method | Status |
-|--------|--------|
-| `get_active_witnesses` | ✅ |
-| `get_witness_schedule` | ✅ |
-| `get_witnesses` | ✅ |
-| `get_witness_by_account` | ✅ |
-| `get_witnesses_by_vote` | ✅ |
-| `get_witnesses_by_counted_vote` | ✅ |
-| `get_witness_count` | ✅ |
-| `lookup_witness_accounts` | ✅ |
+All validator and witness method names route to the `validator_api` plugin on new nodes. When the `validator_api` plugin is unavailable (older nodes), the library automatically falls back to the `witness_api` plugin with the corresponding old method name.
 
-### validator_api (8 methods) ✅
-
-Renamed from `witness_api`. Uses `validator_api` plugin name on new nodes; automatically falls back to `witness_api` methods on older nodes.
-
-| Method | Status | Fallback |
-|--------|--------|----------|
-| `get_active_validators` | ✅ | → `get_active_witnesses` |
-| `get_validator_schedule` | ✅ | → `get_witness_schedule` |
-| `get_validators` | ✅ | → `get_witnesses` |
-| `get_validator_by_account` | ✅ | → `get_witness_by_account` |
-| `get_validators_by_vote` | ✅ | → `get_witnesses_by_vote` |
-| `get_validators_by_counted_vote` | ✅ | → `get_witnesses_by_counted_vote` |
-| `get_validator_count` | ✅ | → `get_witness_count` |
-| `lookup_validator_accounts` | ✅ | → `lookup_witness_accounts` |
+| Method | Plugin Sent | Fallback |
+|--------|-------------|----------|
+| `get_active_validators` | `validator_api` | → `witness_api`.`get_active_witnesses` |
+| `get_active_witnesses` | `validator_api` | → `witness_api`.`get_active_witnesses` |
+| `get_validator_by_account` | `validator_api` | → `witness_api`.`get_witness_by_account` |
+| `get_witness_by_account` | `validator_api` | → `witness_api`.`get_witness_by_account` |
+| `get_validator_count` | `validator_api` | → `witness_api`.`get_witness_count` |
+| `get_witness_count` | `validator_api` | → `witness_api`.`get_witness_count` |
+| `get_validator_schedule` | `validator_api` | → `witness_api`.`get_witness_schedule` |
+| `get_witness_schedule` | `validator_api` | → `witness_api`.`get_witness_schedule` |
+| `get_validators` | `validator_api` | → `witness_api`.`get_witnesses` |
+| `get_witnesses` | `validator_api` | → `witness_api`.`get_witnesses` |
+| `get_validators_by_counted_vote` | `validator_api` | → `witness_api`.`get_witnesses_by_counted_vote` |
+| `get_witnesses_by_counted_vote` | `validator_api` | → `witness_api`.`get_witnesses_by_counted_vote` |
+| `get_validators_by_vote` | `validator_api` | → `witness_api`.`get_witnesses_by_vote` |
+| `get_witnesses_by_vote` | `validator_api` | → `witness_api`.`get_witnesses_by_vote` |
+| `lookup_validator_accounts` | `validator_api` | → `witness_api`.`lookup_witness_accounts` |
+| `lookup_witness_accounts` | `validator_api` | → `witness_api`.`lookup_witness_accounts` |
 
 ### account_by_key (1 method) ✅
 
@@ -443,13 +437,13 @@ $tx->account_witness_proxy($account, $proxy);
 | `witness_miss_penalty_duration` | `validator_miss_penalty_duration` | `chain_properties_hf6` |
 | `witness_declaration_fee` | `validator_declaration_fee` | `chain_properties_hf9` |
 
-### API Method Fallback
+### API Method Routing
 
-New `validator_api` method names are tried first; falls back to `witness_api` on older nodes automatically.
+All 16 method names (8 old `witness_*` + 8 new `validator_*`) route to the `validator_api` plugin. Old method names are aliases. When the `validator_api` plugin is unavailable (older nodes), the library automatically falls back to the `witness_api` plugin with the corresponding old method name via `execute_witness_fallback()`.
 
 ```php
-$result = $rpc->execute_method('get_active_validators');  // tries validator_api, falls back to witness_api
-$result = $rpc->execute_method('get_active_witnesses');   // direct old method (still works)
+$result = $rpc->execute_method('get_active_validators');  // validator_api on new, falls back to witness_api.get_active_witnesses on old
+$result = $rpc->execute_method('get_active_witnesses');   // validator_api on new (alias), falls back to witness_api.get_active_witnesses on old
 ```
 
 ### Node Response Field Renames (library relays raw JSON — no code changes needed)

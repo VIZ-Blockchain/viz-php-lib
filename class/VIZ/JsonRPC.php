@@ -109,26 +109,24 @@ class JsonRPC{
 		'get_paid_subscription_status'=>'paid_subscription_api',
 		'get_paid_subscriptions'=>'paid_subscription_api',
 
-		//witness_api
-		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/witness_api/plugin.cpp
-		'get_active_witnesses'=>'witness_api',
-		'get_witness_by_account'=>'witness_api',
-		'get_witness_count'=>'witness_api',
-		'get_witness_schedule'=>'witness_api',
-		'get_witnesses'=>'witness_api',
-		'get_witnesses_by_counted_vote'=>'witness_api',
-		'get_witnesses_by_vote'=>'witness_api',
-		'lookup_witness_accounts'=>'witness_api',
-
 		//validator_api (renamed from witness_api)
+		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/witness_api/plugin.cpp
 		'get_active_validators'=>'validator_api',
+		'get_active_witnesses'=>'validator_api',
 		'get_validator_by_account'=>'validator_api',
+		'get_witness_by_account'=>'validator_api',
 		'get_validator_count'=>'validator_api',
+		'get_witness_count'=>'validator_api',
 		'get_validator_schedule'=>'validator_api',
+		'get_witness_schedule'=>'validator_api',
 		'get_validators'=>'validator_api',
+		'get_witnesses'=>'validator_api',
 		'get_validators_by_counted_vote'=>'validator_api',
+		'get_witnesses_by_counted_vote'=>'validator_api',
 		'get_validators_by_vote'=>'validator_api',
+		'get_witnesses_by_vote'=>'validator_api',
 		'lookup_validator_accounts'=>'validator_api',
+		'lookup_witness_accounts'=>'validator_api',
 
 		//block_info
 		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/block_info/block_info_plugin.cpp
@@ -279,17 +277,18 @@ class JsonRPC{
 		if(false!==strpos($headers,'Content-Encoding: gzip')){$clear_result=gzdecode($clear_result);}
 		return array($headers,$clear_result);
 	}
-	function raw_method($method,$params){
+	function raw_method($method,$params,$plugin=null){
 		if(!isset($this->api[$method])){
 			return false;
 		}
-		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$this->api[$method].'","'.$method.'",['.$params.']]}';
+		$api_plugin=$plugin!==null?$plugin:$this->api[$method];
+		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$api_plugin.'","'.$method.'",['.$params.']]}';
 		if($this->increase_post_num){
 			$this->post_num++;
 		}
 		return $result;
 	}
-	function build_method($method,$params){
+	function build_method($method,$params,$plugin=null){
 		$params_arr=array();
 		$params_str='';
 		if(count($params)>0){
@@ -326,13 +325,15 @@ class JsonRPC{
 			}
 			$params_str=implode(',',$params_arr);
 		}
-		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$this->api[$method].'","'.$method.'",['.(($params)?$params_str:'').']]}';
+		$api_plugin=$plugin!==null?$plugin:$this->api[$method];
+		$result='{"id":'.$this->post_num.',"jsonrpc":"2.0","method":"call","params":["'.$api_plugin.'","'.$method.'",['.(($params)?$params_str:'').']]}';
 		if($this->increase_post_num){
 			$this->post_num++;
 		}
 		return $result;
 	}
-	static $validator_fallback=array(
+	// Method name aliases for validator_api: new name -> old name (for older nodes)
+	static $validator_method_aliases=array(
 		'get_active_validators'=>'get_active_witnesses',
 		'get_validator_by_account'=>'get_witness_by_account',
 		'get_validator_count'=>'get_witness_count',
@@ -350,10 +351,6 @@ class JsonRPC{
 			$jsonrpc_query=$this->build_method($method,$params);
 		}
 		if(false===$jsonrpc_query){//not actual api method
-			//try fallback to old witness method name for older nodes
-			if(isset(self::$validator_fallback[$method])){
-				return $this->execute_method(self::$validator_fallback[$method],$params,$debug);
-			}
 			$result=false;
 		}
 		else{
@@ -368,9 +365,9 @@ class JsonRPC{
 				print '<!-- RESULT: '.$result.' -->'.PHP_EOL;
 			}
 			if(false===strpos($header," 200 OK\r\n")){//check server status code
-				//try fallback to old witness method name for older nodes
-				if(isset(self::$validator_fallback[$method])){
-					return $this->execute_method(self::$validator_fallback[$method],$params,$debug);
+				//try fallback to witness_api for older nodes
+				if(isset($this->api[$method]) && $this->api[$method]==='validator_api'){
+					return $this->execute_witness_fallback($method,$params,$debug);
 				}
 				return false;//server code error
 			}
@@ -389,7 +386,46 @@ class JsonRPC{
 			}
 		}
 		else{
+			//try fallback to witness_api for older nodes
+			if(isset($this->api[$method]) && $this->api[$method]==='validator_api'){
+				return $this->execute_witness_fallback($method,$params,$debug);
+			}
 			//can be not existed api method, socket error, server timeout
+			return false;
+		}
+	}
+	function execute_witness_fallback($method,$params=array(),$debug=false){
+		// Resolve old method name for older nodes that only know witness_* methods
+		$fallback_method=isset(self::$validator_method_aliases[$method])?self::$validator_method_aliases[$method]:$method;
+		if(!is_array($params)){
+			$jsonrpc_query=$this->raw_method($fallback_method,$params,'witness_api');
+		}
+		else{
+			$jsonrpc_query=$this->build_method($fallback_method,$params,'witness_api');
+		}
+		if(false===$jsonrpc_query){
+			return false;
+		}
+		$result=$this->get_url($this->endpoint,$jsonrpc_query,$debug||$this->debug);
+		if(false!==$result){
+			list($header,$result)=$this->parse_web_result($result);
+			if(false===strpos($header," 200 OK\r\n")){
+				return false;//server code error
+			}
+			$result_arr=json_decode($result,true);
+			if($this->return_only_result){
+				if(isset($result_arr['result'])){
+					return $result_arr['result'];
+				}
+				else{
+					return false;
+				}
+			}
+			else{
+				return $result_arr;
+			}
+		}
+		else{
 			return false;
 		}
 	}
