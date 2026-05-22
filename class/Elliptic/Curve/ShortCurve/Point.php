@@ -80,6 +80,7 @@ class Point extends \Elliptic\Curve\BaseCurve\Point implements JsonSerializable
     }
 
     //toJSON()
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         $res = array($this->x, $this->y);

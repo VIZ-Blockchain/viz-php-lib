@@ -92,6 +92,7 @@ class BN implements JsonSerializable
         return $this->bi->toNumber();
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize() {
         return $this->toString(16);
     }
@@ -454,7 +455,7 @@ class BN implements JsonSerializable
 
     // Find `this` / `num`
     public function div(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert(!$num->isZero());
         $res = clone($this);
         $res->bi = $res->bi->div($num->bi);
         return $res;
@@ -462,14 +463,14 @@ class BN implements JsonSerializable
 
     // Find `this` % `num`
     public function mod(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert(!$num->isZero());
         $res = clone($this);
         $res->bi = $res->bi->divR($num->bi);
         return $res;
     }
 
     public function umod(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert(!$num->isZero());
         $tmp = $num->bi->sign() < 0 ? $num->bi->abs() : $num->bi;
         $res = clone($this);
         $res->bi = $this->bi->mod($tmp);
@@ -479,7 +480,7 @@ class BN implements JsonSerializable
     // Find Round(`this` / `num`)
     public function divRound(BN $num)
     {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert(!$num->isZero());
 
         $negative = $this->negative() !== $num->negative();
 
