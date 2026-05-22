@@ -14,6 +14,7 @@ class JsonRPC{
 	public $check_ssl=true;
 	public $return_only_result=true;
 	public $read_timeout=3;//sec
+	public $last_url='';
 	function __construct($endpoint='',$debug=false){
 		$this->endpoint=$endpoint;
 		$this->debug=$debug;

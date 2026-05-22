@@ -1102,7 +1102,7 @@ class Transaction{
 		$raw.=$this->encode_uint8($version).$this->encode_array($new_props,$props_types,true);
 		return [$json,$raw];
 	}
-	function build_custom($required_active_auths=[],$required_regular_auths=[],$id,$json_str){
+	function build_custom($required_active_auths=[],$required_regular_auths=[],$id=null,$json_str=null){
 		$json='["custom",{';
 		$json.='"required_active_auths":[';
 		$accounts_list=[];

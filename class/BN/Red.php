@@ -37,14 +37,14 @@ class Red
 
     public function verify1(BN $num)
     {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->negative()); //,"red works only with positives");
-        assert($num->red); //, "red works only with red numbers");
+        assert(!$num->negative());
+        assert($num->red);
     }
 
     public function verify2(BN $a, BN $b)
     {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$a->negative() && !$b->negative()); //, "red works only with positives");
-        assert($a->red && ($a->red == $b->red)); //, "red works only with red numbers");
+        assert(!$a->negative() && !$b->negative());
+        assert($a->red && ($a->red == $b->red));
     }
 
     public function imod(BN &$a) {

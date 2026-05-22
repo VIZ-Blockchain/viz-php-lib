@@ -153,7 +153,7 @@ class Utils{
 		];
 		return $object;
 	}
-	static function voice_event($endpoint,$key,$account,$event_type,$target_account=false,$target_block,$data_type=false,$data=false,$synchronous=false,$return_raw=false){
+	static function voice_event($endpoint,$key,$account,$event_type,$target_account=false,$target_block=null,$data_type=false,$data=false,$synchronous=false,$return_raw=false){
 		if('object'==gettype($key)){
 			if('VIZ\Key'==get_class($key)){
 				$key=$key->encode();
