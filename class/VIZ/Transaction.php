@@ -77,7 +77,7 @@ class Transaction{
 				$ref_block_num=$dgp['last_irreversible_block_ref_num'];
 				$ref_block_num_bin=bin2hex(pack('S',$ref_block_num));
 				$ref_block_prefix=$dgp['last_irreversible_block_ref_prefix'];
-				$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin(dechex($ref_block_prefix))));
+				$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin(str_pad(dechex($ref_block_prefix),8,'0',STR_PAD_LEFT))));
 			}
 		}
 
