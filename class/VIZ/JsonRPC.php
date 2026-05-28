@@ -68,7 +68,6 @@ class JsonRPC{
 		'get_escrow'=>'database_api',
 		'get_expiring_vesting_delegations'=>'database_api',
 		'get_master_history'=>'database_api',
-		'get_owner_history'=>'database_api',
 		'get_recovery_request'=>'database_api',
 		'get_subaccounts_on_sale'=>'database_api',
 		'get_vesting_delegations'=>'database_api',
@@ -77,7 +76,6 @@ class JsonRPC{
 		'lookup_accounts'=>'database_api',
 		/* Authority / validation */
 		'get_potential_signatures'=>'database_api',
-		'get_proposed_transaction'=>'database_api',
 		'get_proposed_transactions'=>'database_api',
 		'get_required_signatures'=>'database_api',
 		'get_transaction_hex'=>'database_api',
