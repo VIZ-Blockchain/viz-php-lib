@@ -1397,6 +1397,456 @@ class Transaction{
 		return [$json,$raw];
 	}
 
+	// ===== Prediction Markets (Onix, HF14) — 23 user operations =====
+	// Each op ends with an empty extensions vector (raw '00'; the key is omitted from JSON like the
+	// core ops above). Percent fields are basis points (10000=100%) unless the field note says otherwise;
+	// the pm_leverage_* / conversion knobs are plain percent but are governance params, not op fields.
+	// Object ids (market_id/bet_id/liquidity_id/position_id/commit_id) are bare integers (pm_object_id_type).
+	function build_pm_oracle_register($owner,$insurance,$fee_percent,$fixed_fee,$rules_url,$auto_accept_creator='',$auto_accept_resolver='',$auto_accept=false){
+		$json='["pm_oracle_register",{';
+		$json.='"owner":'.$this->json_string($owner);
+		$json.=',"insurance":"'.$insurance.'"';
+		$json.=',"fee_percent":'.$fee_percent;
+		$json.=',"fixed_fee":"'.$fixed_fee.'"';
+		$json.=',"rules_url":'.$this->json_string($rules_url);
+		$json.=',"auto_accept_creator":'.$this->json_string($auto_accept_creator);
+		$json.=',"auto_accept_resolver":'.$this->json_string($auto_accept_resolver);
+		$json.=',"auto_accept":'.($auto_accept?'true':'false');
+		$json.='}]';
+		$raw='42';//op-id 66
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_asset($insurance);
+		$raw.=$this->encode_uint16($fee_percent);
+		$raw.=$this->encode_asset($fixed_fee);
+		$raw.=$this->encode_string($rules_url);
+		$raw.=$this->encode_string($auto_accept_creator);
+		$raw.=$this->encode_string($auto_accept_resolver);
+		$raw.=$this->encode_bool($auto_accept);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_oracle_update($owner,$insurance_delta=null,$fee_percent=null,$fixed_fee=null,$rules_url=null,$auto_accept_creator=null,$auto_accept_resolver=null,$auto_accept=null){
+		//optional fields: pass null to leave unchanged. insurance_delta is a signed asset ("-5.000 VIZ" to withdraw).
+		$json='["pm_oracle_update",{';
+		$json.='"owner":'.$this->json_string($owner);
+		if($insurance_delta!==null){$json.=',"insurance_delta":"'.$insurance_delta.'"';}
+		if($fee_percent!==null){$json.=',"fee_percent":'.$fee_percent;}
+		if($fixed_fee!==null){$json.=',"fixed_fee":"'.$fixed_fee.'"';}
+		if($rules_url!==null){$json.=',"rules_url":'.$this->json_string($rules_url);}
+		if($auto_accept_creator!==null){$json.=',"auto_accept_creator":'.$this->json_string($auto_accept_creator);}
+		if($auto_accept_resolver!==null){$json.=',"auto_accept_resolver":'.$this->json_string($auto_accept_resolver);}
+		if($auto_accept!==null){$json.=',"auto_accept":'.($auto_accept?'true':'false');}
+		$json.='}]';
+		$raw='43';//op-id 67
+		$raw.=$this->encode_string($owner);
+		$raw.=$this->encode_optional($insurance_delta!==null,$insurance_delta!==null?$this->encode_asset($insurance_delta):'');
+		$raw.=$this->encode_optional($fee_percent!==null,$fee_percent!==null?$this->encode_uint16($fee_percent):'');
+		$raw.=$this->encode_optional($fixed_fee!==null,$fixed_fee!==null?$this->encode_asset($fixed_fee):'');
+		$raw.=$this->encode_optional($rules_url!==null,$rules_url!==null?$this->encode_string($rules_url):'');
+		$raw.=$this->encode_optional($auto_accept_creator!==null,$auto_accept_creator!==null?$this->encode_string($auto_accept_creator):'');
+		$raw.=$this->encode_optional($auto_accept_resolver!==null,$auto_accept_resolver!==null?$this->encode_string($auto_accept_resolver):'');
+		$raw.=$this->encode_optional($auto_accept!==null,$auto_accept!==null?$this->encode_bool($auto_accept):'');
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_create_market($creator,$oracle,$market_type,$outcomes,$url,$oracle_fee_percent,$oracle_fixed_fee,$creator_fee_percent,$liquidity_fee_percent,$liquidity,$lmsr_b,$betting_expiration,$result_expiration,$time_penalty_type=0,$time_penalty_value=0,$penalty_curve_type=0,$allow_early_resolution=false,$allow_cancellation=false,$allow_batch=false,$allow_instant_bet=true,$endogeneity_tier=1,$dispute_mode=0,$dispute_resolver='',$dispute_penalty_percent=0,$metadata=''){
+		$outcomes=array_values($outcomes);
+		$json='["pm_create_market",{';
+		$json.='"creator":'.$this->json_string($creator);
+		$json.=',"oracle":'.$this->json_string($oracle);
+		$json.=',"market_type":'.$market_type;
+		$json.=',"outcomes":'.json_encode($outcomes,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+		$json.=',"url":'.$this->json_string($url);
+		$json.=',"oracle_fee_percent":'.$oracle_fee_percent;
+		$json.=',"oracle_fixed_fee":"'.$oracle_fixed_fee.'"';
+		$json.=',"creator_fee_percent":'.$creator_fee_percent;
+		$json.=',"liquidity_fee_percent":'.$liquidity_fee_percent;
+		$json.=',"liquidity":"'.$liquidity.'"';
+		$json.=',"lmsr_b":'.$lmsr_b;
+		$json.=',"betting_expiration":"'.$betting_expiration.'"';
+		$json.=',"result_expiration":"'.$result_expiration.'"';
+		$json.=',"time_penalty_type":'.$time_penalty_type;
+		$json.=',"time_penalty_value":'.$time_penalty_value;
+		$json.=',"penalty_curve_type":'.$penalty_curve_type;
+		$json.=',"allow_early_resolution":'.($allow_early_resolution?'true':'false');
+		$json.=',"allow_cancellation":'.($allow_cancellation?'true':'false');
+		$json.=',"allow_batch":'.($allow_batch?'true':'false');
+		$json.=',"allow_instant_bet":'.($allow_instant_bet?'true':'false');
+		$json.=',"endogeneity_tier":'.$endogeneity_tier;
+		$json.=',"dispute_mode":'.$dispute_mode;
+		$json.=',"dispute_resolver":'.$this->json_string($dispute_resolver);
+		$json.=',"dispute_penalty_percent":'.$dispute_penalty_percent;
+		$json.=',"metadata":'.$this->json_string($metadata);
+		$json.='}]';
+		$raw='44';//op-id 68
+		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_string($oracle);
+		$raw.=$this->encode_uint8($market_type);
+		$raw.=$this->encode_array($outcomes,['string']);
+		$raw.=$this->encode_string($url);
+		$raw.=$this->encode_uint16($oracle_fee_percent);
+		$raw.=$this->encode_asset($oracle_fixed_fee);
+		$raw.=$this->encode_uint16($creator_fee_percent);
+		$raw.=$this->encode_uint16($liquidity_fee_percent);
+		$raw.=$this->encode_asset($liquidity);
+		$raw.=$this->encode_int64($lmsr_b);
+		$raw.=$this->encode_timestamp($betting_expiration);
+		$raw.=$this->encode_timestamp($result_expiration);
+		$raw.=$this->encode_uint8($time_penalty_type);
+		$raw.=$this->encode_uint32($time_penalty_value);
+		$raw.=$this->encode_uint8($penalty_curve_type);
+		$raw.=$this->encode_bool($allow_early_resolution);
+		$raw.=$this->encode_bool($allow_cancellation);
+		$raw.=$this->encode_bool($allow_batch);
+		$raw.=$this->encode_bool($allow_instant_bet);
+		$raw.=$this->encode_uint8($endogeneity_tier);
+		$raw.=$this->encode_uint8($dispute_mode);
+		$raw.=$this->encode_string($dispute_resolver);
+		$raw.=$this->encode_int16($dispute_penalty_percent);
+		$raw.=$this->encode_string($metadata);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_oracle_accept_market($oracle,$market_id,$accept,$oracle_fee_percent=0,$oracle_fixed_fee='0.000 VIZ'){
+		$json='["pm_oracle_accept_market",{';
+		$json.='"oracle":'.$this->json_string($oracle);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"accept":'.($accept?'true':'false');
+		$json.=',"oracle_fee_percent":'.$oracle_fee_percent;
+		$json.=',"oracle_fixed_fee":"'.$oracle_fixed_fee.'"';
+		$json.='}]';
+		$raw='45';//op-id 69
+		$raw.=$this->encode_string($oracle);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_bool($accept);
+		$raw.=$this->encode_uint16($oracle_fee_percent);
+		$raw.=$this->encode_asset($oracle_fixed_fee);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_place_bet($account,$market_id,$side,$outcome_index,$amount,$min_tokens=0,$mode=0){
+		//binary: side 0/1, outcome_index -1. multi: side -1, outcome_index 0..N-1. mode 0 instant / 1 batch.
+		$json='["pm_place_bet",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"side":'.$side;
+		$json.=',"outcome_index":'.$outcome_index;
+		$json.=',"amount":"'.$amount.'"';
+		$json.=',"min_tokens":'.$min_tokens;
+		$json.=',"mode":'.$mode;
+		$json.='}]';
+		$raw='46';//op-id 70
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int8($side);
+		$raw.=$this->encode_int16($outcome_index);
+		$raw.=$this->encode_asset($amount);
+		$raw.=$this->encode_int64($min_tokens);
+		$raw.=$this->encode_uint8($mode);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_commit_bet($account,$market_id,$commitment,$escrow_amount,$no_reveal_fee_percent){
+		//commitment = SHA-256 hex of the preimage (see pm_commitment()). no_reveal_fee_percent MUST equal
+		//median(pm_commit_no_reveal_penalty_percent) or the node rejects the commit.
+		$json='["pm_commit_bet",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"commitment":"'.strtolower($commitment).'"';
+		$json.=',"escrow_amount":"'.$escrow_amount.'"';
+		$json.=',"no_reveal_fee_percent":'.$no_reveal_fee_percent;
+		$json.='}]';
+		$raw='47';//op-id 71
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_sha256($commitment);
+		$raw.=$this->encode_asset($escrow_amount);
+		$raw.=$this->encode_uint16($no_reveal_fee_percent);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_reveal_bet($account,$commit_id,$side,$outcome_index,$amount,$salt,$min_tokens=0){
+		$json='["pm_reveal_bet",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"commit_id":'.$commit_id;
+		$json.=',"side":'.$side;
+		$json.=',"outcome_index":'.$outcome_index;
+		$json.=',"amount":"'.$amount.'"';
+		$json.=',"salt":'.$this->json_string($salt);
+		$json.=',"min_tokens":'.$min_tokens;
+		$json.='}]';
+		$raw='48';//op-id 72
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($commit_id);
+		$raw.=$this->encode_int8($side);
+		$raw.=$this->encode_int16($outcome_index);
+		$raw.=$this->encode_asset($amount);
+		$raw.=$this->encode_string($salt);
+		$raw.=$this->encode_int64($min_tokens);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_cancel_bet($account,$bet_id,$min_return=0){
+		$json='["pm_cancel_bet",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"bet_id":'.$bet_id;
+		$json.=',"min_return":'.$min_return;
+		$json.='}]';
+		$raw='49';//op-id 73
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($bet_id);
+		$raw.=$this->encode_int64($min_return);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_add_liquidity($provider,$market_id,$amount){
+		$json='["pm_add_liquidity",{';
+		$json.='"provider":'.$this->json_string($provider);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"amount":"'.$amount.'"';
+		$json.='}]';
+		$raw='4a';//op-id 74
+		$raw.=$this->encode_string($provider);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_asset($amount);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_withdraw_liquidity($provider,$liquidity_id,$amount='0.000 VIZ'){
+		//amount 0 = full position
+		$json='["pm_withdraw_liquidity",{';
+		$json.='"provider":'.$this->json_string($provider);
+		$json.=',"liquidity_id":'.$liquidity_id;
+		$json.=',"amount":"'.$amount.'"';
+		$json.='}]';
+		$raw='4b';//op-id 75
+		$raw.=$this->encode_string($provider);
+		$raw.=$this->encode_int64($liquidity_id);
+		$raw.=$this->encode_asset($amount);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_resolve_market($oracle,$market_id,$winning_outcome,$decision_url='',$decision_reason=''){
+		$json='["pm_resolve_market",{';
+		$json.='"oracle":'.$this->json_string($oracle);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"winning_outcome":'.$winning_outcome;
+		$json.=',"decision_url":'.$this->json_string($decision_url);
+		$json.=',"decision_reason":'.$this->json_string($decision_reason);
+		$json.='}]';
+		$raw='4c';//op-id 76
+		$raw.=$this->encode_string($oracle);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int16($winning_outcome);
+		$raw.=$this->encode_string($decision_url);
+		$raw.=$this->encode_string($decision_reason);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_no_contest($oracle,$market_id,$reason=''){
+		$json='["pm_no_contest",{';
+		$json.='"oracle":'.$this->json_string($oracle);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"reason":'.$this->json_string($reason);
+		$json.='}]';
+		$raw='4d';//op-id 77
+		$raw.=$this->encode_string($oracle);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_string($reason);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_dispute_create($disputer,$market_id,$proposed_outcome,$reason=''){
+		//proposed_outcome -1 = void/no-contest challenge
+		$json='["pm_dispute_create",{';
+		$json.='"disputer":'.$this->json_string($disputer);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"proposed_outcome":'.$proposed_outcome;
+		$json.=',"reason":'.$this->json_string($reason);
+		$json.='}]';
+		$raw='4e';//op-id 78
+		$raw.=$this->encode_string($disputer);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int16($proposed_outcome);
+		$raw.=$this->encode_string($reason);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_dispute_vote($voter,$market_id,$vote_outcome,$vote_percent){
+		//committee mode; signed with REGULAR authority. vote_outcome -1 = uphold oracle.
+		$json='["pm_dispute_vote",{';
+		$json.='"voter":'.$this->json_string($voter);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"vote_outcome":'.$vote_outcome;
+		$json.=',"vote_percent":'.$vote_percent;
+		$json.='}]';
+		$raw='4f';//op-id 79
+		$raw.=$this->encode_string($voter);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int16($vote_outcome);
+		$raw.=$this->encode_int16($vote_percent);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_dispute_resolve($resolver,$market_id,$correct_outcome,$penalty_amount='0.000 VIZ',$ban_oracle=false,$ban_oracle_until='1970-01-01T00:00:00',$ban_creator=false,$ban_creator_until='1970-01-01T00:00:00'){
+		//account mode verdict. *_until = 2106-02-07T06:28:15 for a permanent ban (time_point_sec::maximum()).
+		$json='["pm_dispute_resolve",{';
+		$json.='"resolver":'.$this->json_string($resolver);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"correct_outcome":'.$correct_outcome;
+		$json.=',"penalty_amount":"'.$penalty_amount.'"';
+		$json.=',"ban_oracle":'.($ban_oracle?'true':'false');
+		$json.=',"ban_oracle_until":"'.$ban_oracle_until.'"';
+		$json.=',"ban_creator":'.($ban_creator?'true':'false');
+		$json.=',"ban_creator_until":"'.$ban_creator_until.'"';
+		$json.='}]';
+		$raw='50';//op-id 80
+		$raw.=$this->encode_string($resolver);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int16($correct_outcome);
+		$raw.=$this->encode_asset($penalty_amount);
+		$raw.=$this->encode_bool($ban_oracle);
+		$raw.=$this->encode_timestamp($ban_oracle_until);
+		$raw.=$this->encode_bool($ban_creator);
+		$raw.=$this->encode_timestamp($ban_creator_until);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_transfer_position($from,$bet_id,$to,$amount=0,$memo=''){
+		//amount = weight to reassign (share_type); 0 = full. memo plaintext or #-prefixed ECIES.
+		$json='["pm_transfer_position",{';
+		$json.='"from":'.$this->json_string($from);
+		$json.=',"bet_id":'.$bet_id;
+		$json.=',"to":'.$this->json_string($to);
+		$json.=',"amount":'.$amount;
+		$json.=',"memo":'.$this->json_string($memo);
+		$json.='}]';
+		$raw='51';//op-id 81
+		$raw.=$this->encode_string($from);
+		$raw.=$this->encode_int64($bet_id);
+		$raw.=$this->encode_string($to);
+		$raw.=$this->encode_int64($amount);
+		$raw.=$this->encode_string($memo);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_lazy_deposit($account,$amount){
+		$json='["pm_lazy_deposit",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"amount":"'.$amount.'"';
+		$json.='}]';
+		$raw='52';//op-id 82
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_asset($amount);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_lazy_withdraw($account,$shares=0,$emergency=false){
+		//shares = pool shares to burn; 0 = all. emergency = withdraw before lock ends (penalty on profit).
+		$json='["pm_lazy_withdraw",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"shares":'.$shares;
+		$json.=',"emergency":'.($emergency?'true':'false');
+		$json.='}]';
+		$raw='53';//op-id 83
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($shares);
+		$raw.=$this->encode_bool($emergency);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_leverage_open($account,$market_id,$outcome_index,$collateral,$loan,$min_tokens=0,$max_slippage_percent=0){
+		//binary CPMM only; gated by pm_leverage_enabled. max_slippage_percent is bp.
+		$json='["pm_leverage_open",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"outcome_index":'.$outcome_index;
+		$json.=',"collateral":"'.$collateral.'"';
+		$json.=',"loan":"'.$loan.'"';
+		$json.=',"min_tokens":'.$min_tokens;
+		$json.=',"max_slippage_percent":'.$max_slippage_percent;
+		$json.='}]';
+		$raw='5b';//op-id 91
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_int16($outcome_index);
+		$raw.=$this->encode_asset($collateral);
+		$raw.=$this->encode_asset($loan);
+		$raw.=$this->encode_int64($min_tokens);
+		$raw.=$this->encode_uint16($max_slippage_percent);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_leverage_close($account,$position_id,$min_return=0){
+		$json='["pm_leverage_close",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"position_id":'.$position_id;
+		$json.=',"min_return":'.$min_return;
+		$json.='}]';
+		$raw='5c';//op-id 92
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($position_id);
+		$raw.=$this->encode_int64($min_return);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_leverage_convert($account,$position_id,$conversion_profit_cost){
+		//conversion_profit_cost MUST equal median(pm_conversion_profit_cost_percent) (plain percent, 50=50%).
+		$json='["pm_leverage_convert",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"position_id":'.$position_id;
+		$json.=',"conversion_profit_cost":'.$conversion_profit_cost;
+		$json.='}]';
+		$raw='5d';//op-id 93
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_int64($position_id);
+		$raw.=$this->encode_uint16($conversion_profit_cost);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_dispute_oracle_respond($oracle,$market_id,$response){
+		$json='["pm_dispute_oracle_respond",{';
+		$json.='"oracle":'.$this->json_string($oracle);
+		$json.=',"market_id":'.$market_id;
+		$json.=',"response":'.$this->json_string($response);
+		$json.='}]';
+		$raw='62';//op-id 98
+		$raw.=$this->encode_string($oracle);
+		$raw.=$this->encode_int64($market_id);
+		$raw.=$this->encode_string($response);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function build_pm_unban($resolver,$target,$unban_oracle=false,$unban_creator=false){
+		//resolver must equal the target's banned_by. At least one of unban_oracle/unban_creator must be true.
+		$json='["pm_unban",{';
+		$json.='"resolver":'.$this->json_string($resolver);
+		$json.=',"target":'.$this->json_string($target);
+		$json.=',"unban_oracle":'.($unban_oracle?'true':'false');
+		$json.=',"unban_creator":'.($unban_creator?'true':'false');
+		$json.='}]';
+		$raw='63';//op-id 99
+		$raw.=$this->encode_string($resolver);
+		$raw.=$this->encode_string($target);
+		$raw.=$this->encode_bool($unban_oracle);
+		$raw.=$this->encode_bool($unban_creator);
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
+	function pm_commitment($market_id,$account,$side,$outcome_index,$amount,$min_tokens,$salt){
+		//SHA-256 commitment for pm_commit_bet (spec 3.6.1). amount & min_tokens are share_type (milli-VIZ,
+		//i.e. VIZ*1000). Raw binary concat, little-endian ints, 32-byte zero-padded account, then salt bytes.
+		$preimage ='';
+		$preimage.=pack('P',$market_id);//8 bytes int64 LE
+		$preimage.=str_pad(substr($account,0,32),32,"\0",STR_PAD_RIGHT);//32-byte account buffer
+		$preimage.=chr($side & 0xFF);//1 byte int8 (multi: -1 => 0xFF)
+		$preimage.=pack('v',$outcome_index & 0xFFFF);//2 bytes int16 LE (binary: -1 => 0xFFFF)
+		$preimage.=pack('P',$amount);//8 bytes int64 LE (milli-VIZ)
+		$preimage.=pack('P',$min_tokens);//8 bytes int64 LE
+		$preimage.=$salt;//raw bytes, no terminator
+		return hash('sha256',$preimage);
+	}
+
 	function start_queue(){
 		$this->queue=true;
 	}
@@ -1465,6 +1915,32 @@ class Transaction{
 	}
 	function encode_uint64($input){
 		return bin2hex(pack('Q',$input));
+	}
+	function encode_int8($input){
+		return bin2hex(pack('c',$input));//signed byte, -1 => ff
+	}
+	function encode_int64($input){
+		//little-endian 8-byte integer (share_type / pm_object_id_type). Values are non-negative in PM ops.
+		return bin2hex(pack('P',$input));
+	}
+	function encode_sha256($input){
+		//raw 32-byte digest, no length prefix. Accepts 64-char hex string.
+		$hex=strtolower($input);
+		if(0===strpos($hex,'0x')){
+			$hex=substr($hex,2);
+		}
+		return str_pad($hex,64,'0',STR_PAD_LEFT);
+	}
+	function encode_optional($present,$hex=''){
+		//fc::optional<T>: 0x00 when absent, 0x01 + encoded value when present
+		if($present){
+			return '01'.$hex;
+		}
+		return '00';
+	}
+	function json_string($input){
+		//robust JSON string literal (handles quotes/unicode); node re-decodes to the same UTF-8 bytes
+		return json_encode((string)$input,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 	}
 	function encode_int($input,$bytes){
 		$result='';

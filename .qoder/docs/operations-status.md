@@ -21,9 +21,13 @@
 | Subscription Operations | 2 | 2 | 0 | 0 |
 | Transfer & Vesting Operations | 5 | 5 | 0 | 0 |
 | Witness / Validator Operations | 6 | 6 | 0 | 0 |
-| **TOTAL** | **43** | **40** | **0** | **3** |
+| Prediction Market Operations (HF14) | 23 | 23 | 0 | 0 |
+| **TOTAL** | **66** | **63** | **0** | **3** |
 
 **Coverage:** 100% of non-deprecated operations implemented
+
+> Virtual operations (chain-generated, decode-only — never built/signed) are not counted above.
+> See [Virtual Operations](#virtual-operations-decode-only) for the HF14 PM vops and `stakeholder_reward`.
 
 ---
 
@@ -89,6 +93,60 @@
 | 25 | `chain_properties_update_operation` | `build_chain_properties_update()` | ✅ Implemented | Added 03.03.2026 |
 | 46 | `versioned_chain_properties_update_operation` | `build_versioned_chain_properties_update()` | ✅ Implemented | Updated to v4 (HF13) |
 | 64 | `set_reward_sharing_operation` | `build_set_reward_sharing()` | ✅ Implemented | HF13 |
+| **Prediction Market Operations (HF14, Onix)** |||||
+| 66 | `pm_oracle_register_operation` | `build_pm_oracle_register()` | ✅ Implemented | active(owner) |
+| 67 | `pm_oracle_update_operation` | `build_pm_oracle_update()` | ✅ Implemented | active(owner); optional fields = `null` |
+| 68 | `pm_create_market_operation` | `build_pm_create_market()` | ✅ Implemented | active(creator) |
+| 69 | `pm_oracle_accept_market_operation` | `build_pm_oracle_accept_market()` | ✅ Implemented | active(oracle) |
+| 70 | `pm_place_bet_operation` | `build_pm_place_bet()` | ✅ Implemented | active(account) |
+| 71 | `pm_commit_bet_operation` | `build_pm_commit_bet()` | ✅ Implemented | active(account); see `pm_commitment()` |
+| 72 | `pm_reveal_bet_operation` | `build_pm_reveal_bet()` | ✅ Implemented | active(account) |
+| 73 | `pm_cancel_bet_operation` | `build_pm_cancel_bet()` | ✅ Implemented | active(account) |
+| 74 | `pm_add_liquidity_operation` | `build_pm_add_liquidity()` | ✅ Implemented | active(provider) |
+| 75 | `pm_withdraw_liquidity_operation` | `build_pm_withdraw_liquidity()` | ✅ Implemented | active(provider) |
+| 76 | `pm_resolve_market_operation` | `build_pm_resolve_market()` | ✅ Implemented | active(oracle) |
+| 77 | `pm_no_contest_operation` | `build_pm_no_contest()` | ✅ Implemented | active(oracle) |
+| 78 | `pm_dispute_create_operation` | `build_pm_dispute_create()` | ✅ Implemented | active(disputer) |
+| 79 | `pm_dispute_vote_operation` | `build_pm_dispute_vote()` | ✅ Implemented | **regular**(voter) |
+| 80 | `pm_dispute_resolve_operation` | `build_pm_dispute_resolve()` | ✅ Implemented | active(resolver) |
+| 81 | `pm_transfer_position_operation` | `build_pm_transfer_position()` | ✅ Implemented | active(from) |
+| 82 | `pm_lazy_deposit_operation` | `build_pm_lazy_deposit()` | ✅ Implemented | active(account) |
+| 83 | `pm_lazy_withdraw_operation` | `build_pm_lazy_withdraw()` | ✅ Implemented | active(account) |
+| 91 | `pm_leverage_open_operation` | `build_pm_leverage_open()` | ✅ Implemented | active(account); gated by `pm_leverage_enabled` |
+| 92 | `pm_leverage_close_operation` | `build_pm_leverage_close()` | ✅ Implemented | active(account) |
+| 93 | `pm_leverage_convert_operation` | `build_pm_leverage_convert()` | ✅ Implemented | active(account) |
+| 98 | `pm_dispute_oracle_respond_operation` | `build_pm_dispute_oracle_respond()` | ✅ Implemented | active(oracle) |
+| 99 | `pm_unban_operation` | `build_pm_unban()` | ✅ Implemented | active(resolver) |
+
+> PM op-ids are **not contiguous** — 84–90, 94–97 and 100 are virtual ops interleaved in the
+> `operation` variant (see below). Every PM user op ends with an empty `extensions` vector and is
+> serialized by JSON name (`["pm_place_bet", {...}]`); percent fields are basis points unless noted.
+
+---
+
+## Virtual Operations (decode-only)
+
+Virtual operations are emitted by the node (block/account history) and **cannot be built or signed** —
+the library only decodes them from `get_account_history` / `get_ops_in_block` (returned already-named
+in JSON, no builder or decoder registry needed).
+
+| ID | Operation Name | Emitted when |
+|----|----------------|--------------|
+| 65 | `stakeholder_reward` | HF13 epoch payout: validator with non-zero `sharing_rate` pays a voter their `shares` (SHARES asset, precision 6) |
+| 84 | `pm_batch_settle` | Epoch boundary: queued/revealed bets settle at a uniform price |
+| 85 | `pm_commit_forfeit` | An unrevealed commitment forfeits its penalty into `forfeit_pool` |
+| 86 | `pm_auto_payout` | Deferred market-level payout marker after the dispute grace elapses |
+| 87 | `pm_dispute_finalize` | Committee-mode tally finalized at `voting_end_time` |
+| 88 | `pm_dispute_auto_close` | Anti-freeze: dispute unresolved at `auto_close_time` → full refund |
+| 89 | `pm_oracle_missed_penalty` | Oracle missed `result_expiration` → insurance slashed, refund all |
+| 90 | `pm_lazy_recall` | Lazy-pool graduated recall step (idle allocation returned) |
+| 94 | `pm_leverage_liquidate` | A leveraged position force-closed (opposing bet / cancel / expiration) |
+| 95 | `pm_leverage_resolve` | A leveraged position settled at market resolution |
+| 96 | `pm_market_accepted` | Oracle accepted (or self-oracle auto-accepted); terms frozen |
+| 97 | `pm_payout` | Per-bettor parimutuel settlement (one per active bet inside settle) |
+| 100 | `pm_ban_expired` | A temporary oracle/creator ban lapsed at `banned_until`; cron cleared it |
+
+> Also chain-generated (pre-HF14): `shutdown_validator` (30), `validator_reward` (42).
 
 ---
 
@@ -101,6 +159,16 @@
 | ❌ | Missing (needs implementation) |
 
 ---
+
+## Recently Added (02.07.2026)
+
+- **Prediction Markets (HF14, Onix)** — all 23 signed PM operations (IDs 66–83, 91–93, 98–99):
+  `build_pm_oracle_register()` … `build_pm_unban()`. See the PM section of the detailed table.
+- `pm_commitment()` helper — builds the byte-exact SHA-256 commit-reveal commitment (spec §3.6.1),
+  verified against the spec golden test vector.
+- New binary codecs on `Transaction`: `encode_int8`, `encode_int64` (LE), `encode_sha256`,
+  `encode_optional` (fc `optional<T>`), `json_string`.
+- 12 PM virtual ops + `stakeholder_reward` (ID 65) documented as decode-only.
 
 ## Recently Added (16.05.2026)
 
