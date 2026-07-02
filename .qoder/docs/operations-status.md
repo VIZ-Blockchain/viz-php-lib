@@ -145,8 +145,12 @@ in JSON, no builder or decoder registry needed).
 | 96 | `pm_market_accepted` | Oracle accepted (or self-oracle auto-accepted); terms frozen |
 | 97 | `pm_payout` | Per-bettor parimutuel settlement (one per active bet inside settle) |
 | 100 | `pm_ban_expired` | A temporary oracle/creator ban lapsed at `banned_until`; cron cleared it |
+| 101 | `pm_market_expired` | Pending market not accepted within `pm_oracle_accept_window_sec`; cron voids it, refunds the creator's seed liquidity (**creation fee forfeited**). Fields: `oracle`, `creator`, `market_id` (int64), `refunded_liquidity` (asset) |
 
 > Also chain-generated (pre-HF14): `shutdown_validator` (30), `validator_reward` (42).
+>
+> A market **rejected** by a signed `pm_oracle_accept_market accept=false` emits **no** vop —
+> detect it via `status = -1`. Only the accept-window timeout emits `pm_market_expired`.
 
 ---
 
@@ -162,6 +166,12 @@ in JSON, no builder or decoder registry needed).
 
 ## Recently Added (02.07.2026)
 
+- **PM spec delta (2026-07)** — decode/read-only, no signed op added or changed:
+  - New virtual op `pm_market_expired` (op-id 101) — oracle-accept-window timeout; documented in the
+    Virtual Operations table (decode from history, no builder).
+  - Two new `get_pm_chain_properties` fields: `pm_oracle_accept_window_sec` (uint32 sec) and
+    `pm_lazy_min_liquidity_fee_percent` (uint16 bp), plus the read-only `pm_market_object.accept_deadline`
+    field. Relayed dynamically — no library code change required.
 - **Prediction Markets (HF14, Onix)** — all 23 signed PM operations (IDs 66–83, 91–93, 98–99):
   `build_pm_oracle_register()` … `build_pm_unban()`. See the PM section of the detailed table.
 - `pm_commitment()` helper — builds the byte-exact SHA-256 commit-reveal commitment (spec §3.6.1),
@@ -444,6 +454,16 @@ All PM read methods route to the `prediction_market_api` plugin. Pagination is u
 | `get_lazy_allocations` | ✅ Added 02.07.2026 | `pm_lazy_allocation_object[]` |
 | `get_market_lazy_allocation` | ✅ Added 02.07.2026 | `pm_lazy_allocation_object` |
 | `get_pm_chain_properties` | ✅ Added 02.07.2026 | `chain_properties_pm` (median governance params, no args) |
+
+> **Governance params are read dynamically** — the library relays whatever `chain_properties_pm`
+> fields the node returns, so new median-voted knobs need no client code change. The 2026-07 delta
+> adds two: `pm_oracle_accept_window_sec` (uint32 sec, default `3600`) — the window in which a named
+> oracle must accept/reject a pending market before the cron voids it (emitting `pm_market_expired`,
+> op 101) and refunds the creator's seed liquidity; and `pm_lazy_min_liquidity_fee_percent` (uint16
+> bp, default `200` = 2%) — the lazy pool refuses to co-provide depth to a market whose
+> `liquidity_fee_percent` is below this floor. Pending markets also carry a new read-only field
+> `pm_market_object.accept_deadline` (= `created_time + pm_oracle_accept_window_sec`; `0` when active
+> at creation). **Read live thresholds; never hard-code the defaults.**
 | `get_market_meta` | ✅ Added 02.07.2026 | `pm_market_meta_object` |
 | `list_markets_by_category` | ✅ Added 02.07.2026 | `pm_market_meta_object[]` |
 | `get_market_categories` | ✅ Added 02.07.2026 | `pm_market_categories_api_object` (no args) |
