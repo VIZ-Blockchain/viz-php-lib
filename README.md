@@ -452,4 +452,95 @@ else{
 }
 ```
 
+## Prediction Markets (Onix, HF14)
+
+The library ships all 23 signed prediction-market operations and all 29 `prediction_market_api`
+read methods. Operation builders follow the usual convention (`build_` prefix for queued/proposed
+operations, no prefix to build-and-sign a standalone transaction) and every op takes an empty
+`extensions` vector automatically. Object ids (`market_id`, `bet_id`, `liquidity_id`,
+`position_id`, `commit_id`) are the bare integer instance of the on-chain object.
+
+Percent fields are basis points (`10000 = 100%`) unless a builder note says otherwise. Assets are
+VIZ strings (`"10.000 VIZ"`); `share_type`/`min_tokens` args are raw milli-VIZ integers (VIZ×1000).
+
+### Operation builders
+
+`pm_oracle_register` · `pm_oracle_update` · `pm_create_market` · `pm_oracle_accept_market` ·
+`pm_place_bet` · `pm_commit_bet` · `pm_reveal_bet` · `pm_cancel_bet` · `pm_add_liquidity` ·
+`pm_withdraw_liquidity` · `pm_resolve_market` · `pm_no_contest` · `pm_dispute_create` ·
+`pm_dispute_vote` (regular auth) · `pm_dispute_resolve` · `pm_transfer_position` · `pm_lazy_deposit` ·
+`pm_lazy_withdraw` · `pm_leverage_open` · `pm_leverage_close` · `pm_leverage_convert` ·
+`pm_dispute_oracle_respond` · `pm_unban`.
+
+```php
+<?php
+include('./class/autoloader.php');
+$creator='test';
+$active_key='5K...';//active
+
+$tx=new VIZ\Transaction('https://api.viz.world/',$active_key);
+
+//create a binary (CPMM) market, self-oracle, seeded with 100 VIZ liquidity
+$tx_data=$tx->pm_create_market(
+	$creator,$creator,0/*binary*/,['Yes','No'],'Will X happen by 2026?',
+	300/*oracle_fee bp*/,'0.000 VIZ',100/*creator_fee bp*/,200/*lp_fee bp*/,
+	'100.000 VIZ',0/*lmsr_b, 0 for binary*/,
+	'2026-08-01T00:00:00'/*betting_expiration*/,'2026-08-02T00:00:00'/*result_expiration*/
+);
+$tx_status=$tx->execute($tx_data['json']);
+
+//place an instant bet on side 0 (binary uses outcome_index -1)
+$bet=$tx->pm_place_bet($creator,5/*market_id*/,0/*side*/,-1/*outcome_index*/,'10.000 VIZ');
+$tx->execute($bet['json']);
+```
+
+Optional fields on `pm_oracle_update` accept `null` to leave a field unchanged
+(`insurance_delta` is a signed asset — `"-5.000 VIZ"` to withdraw):
+
+```php
+$upd=$tx->pm_oracle_update('oracle_acc',null/*insurance_delta*/,500/*fee_percent bp*/);
+```
+
+### Commit–reveal betting
+
+`pm_commitment(...)` builds the byte-exact SHA-256 commitment the node re-checks on reveal (a wrong
+preimage forfeits the escrow). `amount`/`min_tokens` are milli-VIZ integers:
+
+```php
+$salt='cafe1234';
+$commitment=$tx->pm_commitment(5/*market_id*/,'alice',0/*side*/,-1/*outcome_index*/,10000/*amount*/,0/*min_tokens*/,$salt);
+//no_reveal_fee_percent MUST equal median(pm_commit_no_reveal_penalty_percent)
+$commit=$tx->pm_commit_bet('alice',5,$commitment,'10.000 VIZ',2000);
+$tx->execute($commit['json']);
+//...later, within the reveal window, re-supply the same values + salt:
+$reveal=$tx->pm_reveal_bet('alice',$commit_id,0,-1,'10.000 VIZ',$salt,0);
+$tx->execute($reveal['json']);
+```
+
+### Read methods (`prediction_market_api`)
+
+Called via `execute_method` like any other API. Pagination is `(...key..., from, limit)` with
+`limit <= 1000`.
+
+```php
+<?php
+include('./class/autoloader.php');
+$api=new VIZ\JsonRPC('https://api.viz.world/');
+
+$market=$api->execute_method('get_market',[5]);
+$active=$api->execute_method('list_markets',[1/*status active*/,0/*from*/,100/*limit*/]);
+$full=$api->execute_method('get_market_full',[5,'alice']);//one-call market detail view
+$props=$api->execute_method('get_pm_chain_properties');//live median governance params
+$kline=$api->execute_method('get_market_kline',[5,0,1000]);//chart series (offset-from-newest)
+```
+
+Full method set: `get_market`, `list_markets`, `list_markets_by_oracle`, `list_markets_by_creator`,
+`get_market_outcomes`, `get_market_weight_sums`, `get_market_bets`, `get_account_positions`,
+`get_market_liquidity`, `get_market_full`, `get_account_leverage_positions`,
+`get_market_leverage_positions`, `get_creator_ban`, `get_leverage_quote`,
+`get_leverage_close_preview`, `get_leverage_convert_preview`, `get_oracle`, `list_oracles`,
+`get_dispute`, `get_dispute_votes`, `get_lazy_pool`, `get_lazy_deposit`, `get_lazy_allocations`,
+`get_market_lazy_allocation`, `get_pm_chain_properties`, `get_market_meta`,
+`list_markets_by_category`, `get_market_categories`, `get_market_kline`.
+
 May VIZ be with you.

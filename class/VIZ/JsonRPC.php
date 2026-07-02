@@ -68,7 +68,6 @@ class JsonRPC{
 		'get_escrow'=>'database_api',
 		'get_expiring_vesting_delegations'=>'database_api',
 		'get_master_history'=>'database_api',
-		'get_owner_history'=>'database_api',
 		'get_recovery_request'=>'database_api',
 		'get_subaccounts_on_sale'=>'database_api',
 		'get_vesting_delegations'=>'database_api',
@@ -77,7 +76,6 @@ class JsonRPC{
 		'lookup_accounts'=>'database_api',
 		/* Authority / validation */
 		'get_potential_signatures'=>'database_api',
-		'get_proposed_transaction'=>'database_api',
 		'get_proposed_transactions'=>'database_api',
 		'get_required_signatures'=>'database_api',
 		'get_transaction_hex'=>'database_api',
@@ -128,6 +126,44 @@ class JsonRPC{
 		'get_witnesses_by_vote'=>'validator_api',
 		'lookup_validator_accounts'=>'validator_api',
 		'lookup_witness_accounts'=>'validator_api',
+
+		//prediction_market_api (Onix, HF14)
+		//all PM read methods, limit<=1000, pagination (...key..., from, limit)
+		/* Markets */
+		'get_market'=>'prediction_market_api',
+		'list_markets'=>'prediction_market_api',
+		'list_markets_by_oracle'=>'prediction_market_api',
+		'list_markets_by_creator'=>'prediction_market_api',
+		'get_market_outcomes'=>'prediction_market_api',
+		'get_market_weight_sums'=>'prediction_market_api',
+		'get_market_bets'=>'prediction_market_api',
+		'get_account_positions'=>'prediction_market_api',
+		'get_market_liquidity'=>'prediction_market_api',
+		'get_market_full'=>'prediction_market_api',
+		/* Leverage */
+		'get_account_leverage_positions'=>'prediction_market_api',
+		'get_market_leverage_positions'=>'prediction_market_api',
+		'get_creator_ban'=>'prediction_market_api',
+		'get_leverage_quote'=>'prediction_market_api',
+		'get_leverage_close_preview'=>'prediction_market_api',
+		'get_leverage_convert_preview'=>'prediction_market_api',
+		/* Oracles */
+		'get_oracle'=>'prediction_market_api',
+		'list_oracles'=>'prediction_market_api',
+		/* Disputes */
+		'get_dispute'=>'prediction_market_api',
+		'get_dispute_votes'=>'prediction_market_api',
+		/* Lazy pool & chain properties */
+		'get_lazy_pool'=>'prediction_market_api',
+		'get_lazy_deposit'=>'prediction_market_api',
+		'get_lazy_allocations'=>'prediction_market_api',
+		'get_market_lazy_allocation'=>'prediction_market_api',
+		'get_pm_chain_properties'=>'prediction_market_api',
+		/* Metadata & charts */
+		'get_market_meta'=>'prediction_market_api',
+		'list_markets_by_category'=>'prediction_market_api',
+		'get_market_categories'=>'prediction_market_api',
+		'get_market_kline'=>'prediction_market_api',
 
 		//block_info
 		//https://github.com/VIZ-Blockchain/viz-cpp-node/blob/master/plugins/block_info/block_info_plugin.cpp
