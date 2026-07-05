@@ -1031,8 +1031,9 @@ class Transaction{
 		$raw.=$this->encode_array($new_props,$props_types,true);
 		return [$json,$raw];
 	}
-	function build_versioned_chain_properties_update($owner,$props){
-		$version=4;
+	function build_versioned_chain_properties_update($owner,$props,$version=4){
+		// $version selects the chain_properties variant: 4 = HF13 base, 5 = HF14 (Onix)
+		// with the Prediction Market governance parameters appended (see below).
 		$default_props=[
 			'account_creation_fee'=>'1.000 VIZ',
 			'maximum_block_size'=>65536,
@@ -1089,6 +1090,106 @@ class Transaction{
 			'withdraw_intervals'=>'uint16',
 			'distribution_epoch_length'=>'uint32',
 		];
+		if($version>=5){
+			// HF14 (Onix) Prediction Market governance parameters (chain_properties_pm,
+			// variant index 5). Field order and types mirror the C++
+			// FC_REFLECT_DERIVED(graphene::protocol::chain_properties_pm) exactly — the
+			// binary layout is consensus-critical, do not reorder.
+			$default_props=array_merge($default_props,[
+				'pm_oracle_registration_fee'=>'10.000 VIZ',
+				'pm_min_oracle_insurance'=>'5000.000 VIZ',
+				'pm_market_creation_fee'=>'5.000 VIZ',
+				'pm_min_liquidity'=>'100.000 VIZ',
+				'pm_max_outcomes'=>10,
+				'pm_max_market_duration'=>31536000,
+				'pm_max_oracle_fee_percent'=>500,
+				'pm_oracle_accept_window_sec'=>3600,
+				'pm_listing_min_coverage_percent'=>250,
+				'pm_betting_min_coverage_percent'=>150,
+				'pm_default_time_penalty_percent'=>50,
+				'pm_max_time_penalty'=>1000000,
+				'pm_dispute_fee'=>'1000.000 VIZ',
+				'pm_dispute_grace_sec'=>43200,
+				'pm_oracle_dispute_response_sec'=>43200,
+				'pm_dispute_auto_close_sec'=>1209600,
+				'pm_dispute_vote_period_sec'=>259200,
+				'pm_dispute_approve_min_percent'=>1000,
+				'pm_oracle_penalty_percent'=>500,
+				'pm_no_contest_penalty_percent'=>5000,
+				'pm_dispute_reward_multiplier'=>30000,
+				'pm_batch_epoch_blocks'=>20,
+				'pm_reveal_window_blocks'=>200,
+				'pm_commit_no_reveal_penalty_percent'=>2000,
+				'pm_min_batch_bet'=>'1.000 VIZ',
+				'pm_commit_reveal_enabled'=>true,
+				'pm_processing_cap_per_block'=>200,
+				'pm_lazy_pool_enabled'=>true,
+				'pm_lazy_alloc_percent'=>2000,
+				'pm_lazy_max_total_alloc_percent'=>7000,
+				'pm_lazy_lock_sec'=>604800,
+				'pm_lazy_recall_step_percent'=>1000,
+				'pm_lazy_emergency_penalty_percent'=>5000,
+				'pm_lazy_min_liquidity_fee_percent'=>200,
+				'pm_leverage_enabled'=>false,
+				'pm_leverage_fund_percent'=>10,
+				'pm_leverage_max_per_position_bp'=>20,
+				'pm_leverage_pool_profit_percent'=>10,
+				'pm_leverage_safety_margin_percent'=>1,
+				'pm_leverage_max_slippage_percent'=>10,
+				'pm_leverage_min_market_liquidity'=>'5000.000 VIZ',
+				'pm_leverage_max_position_ratio_percent'=>5,
+				'pm_leverage_expiration_buffer_sec'=>86400,
+				'pm_leverage_m_factor_percent'=>50,
+				'pm_conversion_profit_cost_percent'=>50,
+			]);
+			$props_types=array_merge($props_types,[
+				'pm_oracle_registration_fee'=>'asset',
+				'pm_min_oracle_insurance'=>'asset',
+				'pm_market_creation_fee'=>'asset',
+				'pm_min_liquidity'=>'asset',
+				'pm_max_outcomes'=>'uint8',
+				'pm_max_market_duration'=>'uint32',
+				'pm_max_oracle_fee_percent'=>'uint16',
+				'pm_oracle_accept_window_sec'=>'uint32',
+				'pm_listing_min_coverage_percent'=>'uint16',
+				'pm_betting_min_coverage_percent'=>'uint16',
+				'pm_default_time_penalty_percent'=>'uint16',
+				'pm_max_time_penalty'=>'uint32',
+				'pm_dispute_fee'=>'asset',
+				'pm_dispute_grace_sec'=>'uint32',
+				'pm_oracle_dispute_response_sec'=>'uint32',
+				'pm_dispute_auto_close_sec'=>'uint32',
+				'pm_dispute_vote_period_sec'=>'uint32',
+				'pm_dispute_approve_min_percent'=>'uint16',
+				'pm_oracle_penalty_percent'=>'uint16',
+				'pm_no_contest_penalty_percent'=>'uint16',
+				'pm_dispute_reward_multiplier'=>'uint32',
+				'pm_batch_epoch_blocks'=>'uint32',
+				'pm_reveal_window_blocks'=>'uint32',
+				'pm_commit_no_reveal_penalty_percent'=>'uint16',
+				'pm_min_batch_bet'=>'asset',
+				'pm_commit_reveal_enabled'=>'bool',
+				'pm_processing_cap_per_block'=>'uint32',
+				'pm_lazy_pool_enabled'=>'bool',
+				'pm_lazy_alloc_percent'=>'uint16',
+				'pm_lazy_max_total_alloc_percent'=>'uint16',
+				'pm_lazy_lock_sec'=>'uint32',
+				'pm_lazy_recall_step_percent'=>'uint16',
+				'pm_lazy_emergency_penalty_percent'=>'uint16',
+				'pm_lazy_min_liquidity_fee_percent'=>'uint16',
+				'pm_leverage_enabled'=>'bool',
+				'pm_leverage_fund_percent'=>'uint16',
+				'pm_leverage_max_per_position_bp'=>'uint16',
+				'pm_leverage_pool_profit_percent'=>'uint16',
+				'pm_leverage_safety_margin_percent'=>'uint16',
+				'pm_leverage_max_slippage_percent'=>'uint16',
+				'pm_leverage_min_market_liquidity'=>'asset',
+				'pm_leverage_max_position_ratio_percent'=>'uint16',
+				'pm_leverage_expiration_buffer_sec'=>'uint32',
+				'pm_leverage_m_factor_percent'=>'uint16',
+				'pm_conversion_profit_cost_percent'=>'uint16',
+			]);
+		}
 		$json='["versioned_chain_properties_update",{';
 		$json.='"owner":"'.$owner.'"';
 		$new_props=$default_props;
