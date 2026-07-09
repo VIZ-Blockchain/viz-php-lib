@@ -133,6 +133,7 @@ class JsonRPC{
 		'get_market'=>'prediction_market_api',
 		'list_markets'=>'prediction_market_api',
 		'list_markets_by_oracle'=>'prediction_market_api',
+		'list_markets_awaiting_resolution'=>'prediction_market_api',
 		'list_markets_by_creator'=>'prediction_market_api',
 		'get_market_outcomes'=>'prediction_market_api',
 		'get_market_weight_sums'=>'prediction_market_api',
