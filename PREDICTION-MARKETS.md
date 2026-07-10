@@ -93,6 +93,10 @@ $kline =$api->execute_method('get_market_kline',[5,0,1000]);
 - **disputes**: `pm_dispute_create` → `pm_dispute_vote` (**regular** key!) /
   `pm_dispute_resolve`, oracle rebuttal `pm_dispute_oracle_respond`, `pm_unban`.
 - **leverage** (gated by `pm_leverage_enabled`): `pm_leverage_open/close/convert`.
+  A **funding** carry cost accrues on the loan every 24h (`pm_leverage_funding_rate_ppm_per_day`,
+  ppm of the loan/day; default `50` = 0.005%/day). It is taken from the bettor's collateral,
+  raises the effective liquidation point, and can trigger liquidation (chain sweep). The position
+  exposes `funding_paid` + `funding_due_time`; `0` disables funding.
 - **multi-outcome (LMSR)** market: market_type `1`, `outcomes=['A','B','C']`,
   `outcome_index` 0..N-1, `lmsr_b>0`, `side=-1`.
 
