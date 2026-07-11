@@ -1861,7 +1861,7 @@ class Transaction{
 		return [$json,$raw];
 	}
 	function build_pm_leverage_open($account,$market_id,$outcome_index,$collateral,$loan,$min_tokens=0,$max_slippage_percent=0){
-		//binary CPMM only; gated by pm_leverage_enabled. max_slippage_percent is bp.
+		//binary CPMM only; gated by pm_leverage_enabled. max_slippage_percent is a PERCENT (0..pm_leverage_max_slippage_percent, default 10) — NOT basis points.
 		$json='["pm_leverage_open",{';
 		$json.='"account":'.$this->json_string($account);
 		$json.=',"market_id":'.$market_id;
