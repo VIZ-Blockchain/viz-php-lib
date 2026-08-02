@@ -6,6 +6,7 @@ use DateTimeZone;
 use VIZ\Key;
 use VIZ\JsonRPC;
 use VIZ\Utils;
+use BI\BigInteger;
 
 class Transaction{
 	public $api;
@@ -1979,8 +1980,10 @@ class Transaction{
 
 		$precision_hex=bin2hex(pack('C',$precision));
 
-		$number=(int)implode('',$number_arr);
-		$number_hex=bin2hex(pack('Q',$number));
+		//keep the amount as a digit string (no lossy (int) cast) and encode via the BigInteger wrapper:
+		//on 32-bit PHP (int) clamps amounts above 2^31 raw and pack('Q') can't hold them.
+		$number=implode('',$number_arr);
+		$number_hex=$this->encode_uint_le_hex($number,8);
 
 		$asset_hex=bin2hex(pack('H*',bin2hex($asset_str)));
 		$asset_hex=str_pad($asset_hex,14,'0');
@@ -2010,21 +2013,20 @@ class Transaction{
 		return bin2hex(pack('s',$input));
 	}
 	function encode_uint_le_hex($input,$bytes){
-		//portable little-endian unsigned hex, $bytes wide.
-		//32-bit-safe: uint32 values (e.g. ref_block_prefix) arrive from json_decode as float on 32-bit PHP
-		//because they exceed PHP_INT_MAX there; dechex()/pack('L') on such a float throw TypeError (PHP8)
-		//or wrap silently. Build byte-by-byte via float arithmetic so the output is identical on 32-bit
-		//and 64-bit PHP. Accurate for values up to 2^53 (float mantissa) — covers the full uint32 range.
-		$n=(float)$input;
-		if($n<0){
-			$n=0;
+		//portable fixed-width little-endian unsigned hex via the BI\BigInteger bcmath/gmp wrapper.
+		//32-bit-safe: uint32/uint64 values that exceed PHP_INT_MAX (e.g. ref_block_prefix, amounts)
+		//come back from json_decode as float on 32-bit PHP; dechex()/pack('L'/'Q'/'P') on such a float
+		//then throw a TypeError (PHP8) or wrap silently and corrupt the signature bytes. BigInteger keeps
+		//full integer precision on any platform. Pass int/string for exactness; a float is stringified
+		//without scientific notation (exact up to 2^53 — the whole uint32 range, and int64 amounts too
+		//when the caller supplies them as int or string rather than a lossy float).
+		$dec=is_int($input)?(string)$input:(is_string($input)?$input:sprintf('%.0f',(float)$input));
+		if(''===$dec||'-'===$dec[0]){
+			$dec='0';
 		}
-		$result='';
-		for($i=0;$i<$bytes;$i++){
-			$result.=str_pad(dechex((int)fmod($n,256)),2,'0',STR_PAD_LEFT);
-			$n=floor($n/256);
-		}
-		return $result;
+		$hex=(new BigInteger($dec,10))->toHex();//big-endian, minimal length
+		$hex=str_pad($hex,$bytes*2,'0',STR_PAD_LEFT);
+		return bin2hex(strrev(hex2bin($hex)));//little-endian, $bytes wide
 	}
 	function encode_uint8($input){
 		return bin2hex(pack('C',$input));
@@ -2036,14 +2038,15 @@ class Transaction{
 		return $this->encode_uint_le_hex($input,4);
 	}
 	function encode_uint64($input){
-		return bin2hex(pack('Q',$input));
+		return $this->encode_uint_le_hex($input,8);
 	}
 	function encode_int8($input){
 		return bin2hex(pack('c',$input));//signed byte, -1 => ff
 	}
 	function encode_int64($input){
 		//little-endian 8-byte integer (share_type / pm_object_id_type). Values are non-negative in PM ops.
-		return bin2hex(pack('P',$input));
+		//Routed through the BigInteger helper so large amounts do not overflow pack('P') / crash on 32-bit PHP.
+		return $this->encode_uint_le_hex($input,8);
 	}
 	function encode_sha256($input){
 		//raw 32-byte digest, no length prefix. Accepts 64-char hex string.
