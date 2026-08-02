@@ -77,7 +77,7 @@ class Transaction{
 				$ref_block_num=$dgp['last_irreversible_block_ref_num'];
 				$ref_block_num_bin=bin2hex(pack('S',$ref_block_num));
 				$ref_block_prefix=$dgp['last_irreversible_block_ref_prefix'];
-				$ref_block_prefix_bin_nice=bin2hex(strrev(hex2bin(str_pad(dechex($ref_block_prefix),8,'0',STR_PAD_LEFT))));
+				$ref_block_prefix_bin_nice=$this->encode_uint_le_hex($ref_block_prefix,4);
 			}
 		}
 
@@ -2009,6 +2009,23 @@ class Transaction{
 	function encode_int16($input){
 		return bin2hex(pack('s',$input));
 	}
+	function encode_uint_le_hex($input,$bytes){
+		//portable little-endian unsigned hex, $bytes wide.
+		//32-bit-safe: uint32 values (e.g. ref_block_prefix) arrive from json_decode as float on 32-bit PHP
+		//because they exceed PHP_INT_MAX there; dechex()/pack('L') on such a float throw TypeError (PHP8)
+		//or wrap silently. Build byte-by-byte via float arithmetic so the output is identical on 32-bit
+		//and 64-bit PHP. Accurate for values up to 2^53 (float mantissa) — covers the full uint32 range.
+		$n=(float)$input;
+		if($n<0){
+			$n=0;
+		}
+		$result='';
+		for($i=0;$i<$bytes;$i++){
+			$result.=str_pad(dechex((int)fmod($n,256)),2,'0',STR_PAD_LEFT);
+			$n=floor($n/256);
+		}
+		return $result;
+	}
 	function encode_uint8($input){
 		return bin2hex(pack('C',$input));
 	}
@@ -2016,7 +2033,7 @@ class Transaction{
 		return bin2hex(pack('S',$input));
 	}
 	function encode_uint32($input){
-		return bin2hex(pack('L',$input));
+		return $this->encode_uint_le_hex($input,4);
 	}
 	function encode_uint64($input){
 		return bin2hex(pack('Q',$input));
@@ -2048,16 +2065,9 @@ class Transaction{
 		return json_encode((string)$input,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 	}
 	function encode_int($input,$bytes){
-		$result='';
-		if($input){
-			$result=dechex($input);
-			if(strlen($result)%2!=0){
-				$result='0'.$result;
-			}
-			$result=bin2hex(strrev(hex2bin($result)));
-		}
-		$result=str_pad($result,$bytes*2,'0');
-		return $result;
+		//little-endian unsigned integer, $bytes wide. Routed through the float-safe helper so large
+		//values (e.g. custom_sequence) do not crash dechex() on 32-bit PHP; byte-identical on 64-bit.
+		return $this->encode_uint_le_hex($input,$bytes);
 	}
 	function encode_array($array,$type,$structed=false){
 		$result='';
