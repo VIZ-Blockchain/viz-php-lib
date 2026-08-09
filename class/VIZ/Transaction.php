@@ -1144,6 +1144,7 @@ class Transaction{
 				'pm_leverage_funding_rate_ppm_per_day'=>50,
 				'pm_conversion_profit_cost_percent'=>50,
 				'pm_closed_market_retention_sec'=>432000,
+				'pm_early_exit_reward_cap_percent'=>3300,
 			]);
 			$props_types=array_merge($props_types,[
 				'pm_oracle_registration_fee'=>'asset',
@@ -1193,6 +1194,7 @@ class Transaction{
 				'pm_leverage_funding_rate_ppm_per_day'=>'uint32',
 				'pm_conversion_profit_cost_percent'=>'uint16',
 				'pm_closed_market_retention_sec'=>'uint32',
+				'pm_early_exit_reward_cap_percent'=>'uint16',
 			]);
 		}
 		$json='["versioned_chain_properties_update",{';
