@@ -139,6 +139,7 @@ class JsonRPC{
 		'get_market_weight_sums'=>'prediction_market_api',
 		'get_market_bets'=>'prediction_market_api',
 		'get_account_positions'=>'prediction_market_api',
+		'get_account_commits'=>'prediction_market_api',
 		'get_market_liquidity'=>'prediction_market_api',
 		'get_market_full'=>'prediction_market_api',
 		/* Leverage */
