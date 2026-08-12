@@ -1977,7 +1977,12 @@ class Transaction{
 	function encode_asset($input){
 		$input_arr=explode(' ',$input);
 		$asset_str=$input_arr[1];
-		$number_arr=explode('.',$input_arr[0]);
+		//asset amount is a SIGNED int64 (share_type). Most amounts are >=0, but signed-delta fields
+		//(e.g. pm_oracle_update.insurance_delta withdraw = "-N VIZ") need two's-complement encoding.
+		$amount_str=$input_arr[0];
+		$neg=(isset($amount_str[0])&&$amount_str[0]==='-');
+		if($neg){$amount_str=substr($amount_str,1);}
+		$number_arr=explode('.',$amount_str);
 		$precision=strlen($number_arr[1]);
 
 		$precision_hex=bin2hex(pack('C',$precision));
@@ -1985,6 +1990,8 @@ class Transaction{
 		//keep the amount as a digit string (no lossy (int) cast) and encode via the BigInteger wrapper:
 		//on 32-bit PHP (int) clamps amounts above 2^31 raw and pack('Q') can't hold them.
 		$number=implode('',$number_arr);
+		//negative → two's-complement int64 (2^64 - |amount|) so the 8-byte LE matches C++ int64 serialization
+		if($neg){$number=bcsub('18446744073709551616',$number);}
 		$number_hex=$this->encode_uint_le_hex($number,8);
 
 		$asset_hex=bin2hex(pack('H*',bin2hex($asset_str)));
