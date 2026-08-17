@@ -62,9 +62,9 @@ class Transaction{
 	function build($operations_json,$operations_data,$operations_count){
 		$dgp=$this->api->execute_method('get_dynamic_global_properties');
 		if(!$this->api->return_only_result){
-			$dgp=$dgp['result'];
+			$dgp=isset($dgp['result'])?$dgp['result']:null;
 		}
-		if(!$dgp['head_block_number']){
+		if(empty($dgp['head_block_number'])){
 			return false;
 		}
 		$need_tapos_block=true;
