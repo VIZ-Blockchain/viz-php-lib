@@ -194,7 +194,7 @@ class JsonRPC{
 			$use_port=intval(substr($host,strpos($host,':')+1));
 			$host=substr($host,0,strpos($host,':'));
 		}
-		$path=$stock2[1];
+		$path=isset($stock2[1])?$stock2[1]:'';
 
 		$content_type='application/json';
 		if(is_array($post)){
