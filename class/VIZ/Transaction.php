@@ -1145,6 +1145,11 @@ class Transaction{
 				'pm_conversion_profit_cost_percent'=>50,
 				'pm_closed_market_retention_sec'=>432000,
 				'pm_early_exit_reward_cap_percent'=>3300,
+				//#432: минимум ставки на instant-пути и бюджет строк на блок у инкрементального сеттла.
+				//Порядок полей = порядок FC_REFLECT_DERIVED(chain_properties_pm) в ноде: оба добавлены
+				//в КОНЕЦ списка, поэтому и здесь идут последними.
+				'pm_min_bet'=>'1.000 VIZ',
+				'pm_settle_rows_per_block'=>2000,
 			]);
 			$props_types=array_merge($props_types,[
 				'pm_oracle_registration_fee'=>'asset',
@@ -1195,6 +1200,8 @@ class Transaction{
 				'pm_conversion_profit_cost_percent'=>'uint16',
 				'pm_closed_market_retention_sec'=>'uint32',
 				'pm_early_exit_reward_cap_percent'=>'uint16',
+				'pm_min_bet'=>'asset',
+				'pm_settle_rows_per_block'=>'uint32',
 			]);
 		}
 		$json='["versioned_chain_properties_update",{';
