@@ -485,14 +485,20 @@ class Transaction{
 		$raw='05';//operation number is 5
 		$raw.=$this->encode_string($account);
 
+		//master, active and regular are optional<authority> in the node, so each one is
+		//prefixed with a present flag; without it the signed bytes differ from what the node
+		//rebuilds out of the JSON and every account_update dies in verify_authority
+		$raw.='01';
 		$raw.=$this->encode_uint32($master['weight_threshold']);
 		$raw.=$this->encode_array($master['account_auths'],[['string','uint16']]);
 		$raw.=$this->encode_array($master['key_auths'],[['public_key','uint16']]);
 
+		$raw.='01';
 		$raw.=$this->encode_uint32($active['weight_threshold']);
 		$raw.=$this->encode_array($active['account_auths'],[['string','uint16']]);
 		$raw.=$this->encode_array($active['key_auths'],[['public_key','uint16']]);
 
+		$raw.='01';
 		$raw.=$this->encode_uint32($regular['weight_threshold']);
 		$raw.=$this->encode_array($regular['account_auths'],[['string','uint16']]);
 		$raw.=$this->encode_array($regular['key_auths'],[['public_key','uint16']]);
