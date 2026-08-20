@@ -940,14 +940,14 @@ class Transaction{
 		$raw.=$this->encode_uint32($request_id);
 		return [$json,$raw];
 	}
-	function build_committee_vote_request($creator,$request_id,$vote_percent){
+	function build_committee_vote_request($voter,$request_id,$vote_percent){
 		$json='["committee_vote_request",{';
-		$json.='"creator":"'.$creator.'"';
+		$json.='"voter":"'.$voter.'"';//node reflects this field as voter, not creator
 		$json.=',"request_id":'.$request_id.'';
 		$json.=',"vote_percent":'.$vote_percent.'';
 		$json.='}]';
 		$raw='25';//operation number is 37
-		$raw.=$this->encode_string($creator);
+		$raw.=$this->encode_string($voter);
 		$raw.=$this->encode_uint32($request_id);
 		$raw.=$this->encode_int16($vote_percent);
 		return [$json,$raw];
