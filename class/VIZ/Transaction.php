@@ -563,7 +563,7 @@ class Transaction{
 	function build_recover_account($account_to_recover,$new_master,$recent_master){
 		$json='["recover_account",{';
 		$json.='"account_to_recover":"'.$account_to_recover.'"';
-		$json.=',"new_master":{';
+		$json.=',"new_master_authority":{';//node reflects this field as new_master_authority
 		$master_str_arr=[];
 		$master_arr=[];
 		if(is_string($new_master)){
