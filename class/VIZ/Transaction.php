@@ -1067,6 +1067,8 @@ class Transaction{
 			'subaccount_on_sale_fee'=>'100.000 VIZ',
 			'validator_declaration_fee'=>'10.000 VIZ',
 			'withdraw_intervals'=>28,
+			'committee_votes_per_request'=>100000,
+			'committee_vote_min_vesting'=>'1000.000 VIZ',
 			'distribution_epoch_length'=>28800,
 		];
 		$props_types=[
@@ -1095,6 +1097,8 @@ class Transaction{
 			'subaccount_on_sale_fee'=>'asset',
 			'validator_declaration_fee'=>'asset',
 			'withdraw_intervals'=>'uint16',
+			'committee_votes_per_request'=>'uint32',
+			'committee_vote_min_vesting'=>'asset',
 			'distribution_epoch_length'=>'uint32',
 		];
 		if($version>=5){
@@ -1156,6 +1160,8 @@ class Transaction{
 				//в КОНЕЦ списка, поэтому и здесь идут последними.
 				'pm_min_bet'=>'1.000 VIZ',
 				'pm_settle_rows_per_block'=>2000,
+				'pm_dispute_votes_per_market'=>100000,
+				'pm_dispute_vote_min_vesting'=>'1000.000 VIZ',
 			]);
 			$props_types=array_merge($props_types,[
 				'pm_oracle_registration_fee'=>'asset',
@@ -1208,6 +1214,8 @@ class Transaction{
 				'pm_early_exit_reward_cap_percent'=>'uint16',
 				'pm_min_bet'=>'asset',
 				'pm_settle_rows_per_block'=>'uint32',
+				'pm_dispute_votes_per_market'=>'uint32',
+				'pm_dispute_vote_min_vesting'=>'asset',
 			]);
 		}
 		$json='["versioned_chain_properties_update",{';
