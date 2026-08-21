@@ -1067,8 +1067,6 @@ class Transaction{
 			'subaccount_on_sale_fee'=>'100.000 VIZ',
 			'validator_declaration_fee'=>'10.000 VIZ',
 			'withdraw_intervals'=>28,
-			'committee_votes_per_request'=>100000,
-			'committee_vote_min_vesting'=>'1000.000 VIZ',
 			'distribution_epoch_length'=>28800,
 		];
 		$props_types=[
@@ -1097,8 +1095,6 @@ class Transaction{
 			'subaccount_on_sale_fee'=>'asset',
 			'validator_declaration_fee'=>'asset',
 			'withdraw_intervals'=>'uint16',
-			'committee_votes_per_request'=>'uint32',
-			'committee_vote_min_vesting'=>'asset',
 			'distribution_epoch_length'=>'uint32',
 		];
 		if($version>=5){
@@ -1155,11 +1151,13 @@ class Transaction{
 				'pm_conversion_profit_cost_percent'=>50,
 				'pm_closed_market_retention_sec'=>432000,
 				'pm_early_exit_reward_cap_percent'=>3300,
-				//#432: минимум ставки на instant-пути и бюджет строк на блок у инкрементального сеттла.
-				//Порядок полей = порядок FC_REFLECT_DERIVED(chain_properties_pm) в ноде: оба добавлены
-				//в КОНЕЦ списка, поэтому и здесь идут последними.
+				//#432 + #689: минимум ставки на instant-пути, бюджет строк на блок сеттла и четыре
+				//голосовых капса (комитет + диспут). Порядок полей = порядок FC_REFLECT_DERIVED
+				//(chain_properties_pm) в ноде: все добавлены В КОНЕЦ списка, поэтому и здесь идут последними.
 				'pm_min_bet'=>'1.000 VIZ',
 				'pm_settle_rows_per_block'=>2000,
+				'committee_votes_per_request'=>100000,
+				'committee_vote_min_vesting'=>'1000.000 VIZ',
 				'pm_dispute_votes_per_market'=>100000,
 				'pm_dispute_vote_min_vesting'=>'1000.000 VIZ',
 			]);
@@ -1214,6 +1212,8 @@ class Transaction{
 				'pm_early_exit_reward_cap_percent'=>'uint16',
 				'pm_min_bet'=>'asset',
 				'pm_settle_rows_per_block'=>'uint32',
+				'committee_votes_per_request'=>'uint32',
+				'committee_vote_min_vesting'=>'asset',
 				'pm_dispute_votes_per_market'=>'uint32',
 				'pm_dispute_vote_min_vesting'=>'asset',
 			]);
