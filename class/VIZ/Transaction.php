@@ -1962,6 +1962,35 @@ class Transaction{
 		$raw.='00';//extensions
 		return [$json,$raw];
 	}
+	function build_set_agent_permission($account,$agent_name,$agent_key,$operations=[],$expiration=0){
+		//HF15 agent access. $operations: wire names (empty = revoke); $expiration: unixtime, 0 = perpetual.
+		//$agent_key is ignored by the node on revoke; pass '' to send the null key.
+		if(''==$agent_key){
+			$agent_key='VIZ1111111111111111111111111111111114T1Anm';
+		}
+		$operations=array_values(array_unique($operations));
+		sort($operations,SORT_STRING);//flat_set<string>: sorted, unique
+		$json='["set_agent_permission",{';
+		$json.='"account":'.$this->json_string($account);
+		$json.=',"agent_name":'.$this->json_string($agent_name);
+		$json.=',"agent_key":'.$this->json_string($agent_key);
+		$json.=',"operations":[';
+		foreach($operations as $i=>$name){
+			$json.=($i?',':'').$this->json_string($name);
+		}
+		$json.=']';
+		$json.=',"expiration":"'.gmdate('Y-m-d\TH:i:s',$expiration).'"';
+		$json.=',"extensions":[]';
+		$json.='}]';
+		$raw='69';//op-id 105
+		$raw.=$this->encode_string($account);
+		$raw.=$this->encode_string($agent_name);
+		$raw.=$this->encode_public_key($agent_key);
+		$raw.=$this->encode_array($operations,'string');
+		$raw.=$this->encode_uint32((int)$expiration);//time_point_sec, unixtime LE
+		$raw.='00';//extensions
+		return [$json,$raw];
+	}
 	function pm_commitment($market_id,$account,$side,$outcome_index,$amount,$min_tokens,$salt){
 		//SHA-256 commitment for pm_commit_bet (spec 3.6.1). amount & min_tokens are share_type (milli-VIZ,
 		//i.e. VIZ*1000). Raw binary concat, little-endian ints, 32-byte zero-padded account, then salt bytes.
