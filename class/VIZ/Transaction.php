@@ -349,160 +349,54 @@ class Transaction{
 		$raw.='00';//op extension
 		return [$json,$raw];
 	}
+	//$master/$active/$regular: public key string, authority array, or null/false to leave the role out
+	//of the operation. Leaving a role out matters: sending master (even unchanged) is limited to once
+	//an hour, and from HF15 sending master or active wipes the account's agents.
 	function build_account_update($account,$master,$active,$regular,$memo_key='VIZ1111111111111111111111111111111114T1Anm',$json_metadata=''){
 		$json='["account_update",{';
 		$json.='"account":"'.$account.'"';
-		$json.=',"master":{';
-		$master_str_arr=[];
-		$master_arr=[];
-		if(is_string($master)){
-			$master_public_key=$master;
-			$master=[
-				'weight_threshold'=>1,
-				'account_auths'=>[],
-				'key_auths'=>[[$master_public_key,1]],
-			];
+		$raw='05';//operation number is 5
+		$raw.=$this->encode_string($account);
+		foreach(['master'=>$master,'active'=>$active,'regular'=>$regular] as $role=>$auth){
+			if(null===$auth||false===$auth){
+				$raw.='00';//optional<authority> absent
+				continue;
+			}
+			if(is_string($auth)){
+				$auth=['weight_threshold'=>1,'account_auths'=>[],'key_auths'=>[[$auth,1]]];
+			}
+			if(!isset($auth['weight_threshold'])){
+				$auth['weight_threshold']=1;
+			}
+			if(!isset($auth['account_auths'])){
+				$auth['account_auths']=[];
+			}
+			if(!isset($auth['key_auths'])){
+				$auth['key_auths']=[];
+			}
+			//the node keeps both lists in flat_maps: accounts by name, keys by their serialized bytes;
+			//sign the same order it rebuilds, or a multi-member authority never verifies
+			usort($auth['account_auths'],function($x,$y){return strcmp($x[0],$y[0]);});
+			usort($auth['key_auths'],function($x,$y){return strcmp($this->encode_public_key($x[0]),$this->encode_public_key($y[0]));});
+			$account_auths=[];
+			foreach($auth['account_auths'] as $a){
+				$account_auths[]='["'.$a[0].'",'.$a[1].']';
+			}
+			$key_auths=[];
+			foreach($auth['key_auths'] as $k){
+				$key_auths[]='["'.$k[0].'",'.$k[1].']';
+			}
+			$json.=',"'.$role.'":{"weight_threshold":'.$auth['weight_threshold'].',"account_auths":['.implode(',',$account_auths).'],"key_auths":['.implode(',',$key_auths).']}';
+			//optional<authority> in the node: present flag, then the authority; without the flag the
+			//signed bytes differ from what the node rebuilds out of the JSON
+			$raw.='01';
+			$raw.=$this->encode_uint32($auth['weight_threshold']);
+			$raw.=$this->encode_array($auth['account_auths'],[['string','uint16']]);
+			$raw.=$this->encode_array($auth['key_auths'],[['public_key','uint16']]);
 		}
-		if(is_array($master)){
-			if(!isset($master['weight_threshold'])){
-				$master['weight_threshold']=1;
-			}
-			$master_arr['weight_threshold']=$master['weight_threshold'];
-			$master_arr['account_auths']=[];
-			foreach($master['account_auths'] as $accounts_auth_arr){
-				$master_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
-			}
-			$master_arr['key_auths']=[];
-			foreach($master['key_auths'] as $key_auths_arr){
-				$master_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
-			}
-			foreach($master_arr as $k=>$v){
-				$v_str='';
-				if(is_array($v)){
-					if(count($v)){
-						$v_str='['.implode(',',$v).']';
-					}
-					else{
-						$v_str='[]';
-					}
-				}
-				else{
-					$v_str=$v;
-				}
-				$master_str_arr[]='"'.$k.'":'.$v_str;
-			}
-			$json.=implode(',',$master_str_arr);
-		}
-		$json.='}';
-		$json.=',"active":{';
-		$active_str_arr=[];
-		$active_arr=[];
-		if(is_string($active)){
-			$active_public_key=$active;
-			$active=[
-				'weight_threshold'=>1,
-				'account_auths'=>[],
-				'key_auths'=>[[$active_public_key,1]],
-			];
-		}
-		if(!isset($active['weight_threshold'])){
-			$active['weight_threshold']=1;
-		}
-		if(is_array($active)){
-			$active_arr['weight_threshold']=$active['weight_threshold'];
-			$active_arr['account_auths']=[];
-			foreach($active['account_auths'] as $accounts_auth_arr){
-				$active_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
-			}
-			$active_arr['key_auths']=[];
-			foreach($active['key_auths'] as $key_auths_arr){
-				$active_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
-			}
-			foreach($active_arr as $k=>$v){
-				$v_str='';
-				if(is_array($v)){
-					if(count($v)){
-						$v_str='['.implode(',',$v).']';
-					}
-					else{
-						$v_str='[]';
-					}
-				}
-				else{
-					$v_str=$v;
-				}
-				$active_str_arr[]='"'.$k.'":'.$v_str;
-			}
-			$json.=implode(',',$active_str_arr);
-		}
-		$json.='}';
-		$json.=',"regular":{';
-		$regular_str_arr=[];
-		$regular_arr=[];
-		if(is_string($regular)){
-			$regular_public_key=$regular;
-			$regular=[
-				'weight_threshold'=>1,
-				'account_auths'=>[],
-				'key_auths'=>[[$regular_public_key,1]],
-			];
-		}
-		if(!isset($regular['weight_threshold'])){
-			$regular['weight_threshold']=1;
-		}
-		if(is_array($regular)){
-			$regular_arr['weight_threshold']=$regular['weight_threshold'];
-			$regular_arr['account_auths']=[];
-			foreach($regular['account_auths'] as $accounts_auth_arr){
-				$regular_arr['account_auths'][]='["'.$accounts_auth_arr[0].'",'.$accounts_auth_arr[1].']';
-			}
-			$regular_arr['key_auths']=[];
-			foreach($regular['key_auths'] as $key_auths_arr){
-				$regular_arr['key_auths'][]='["'.$key_auths_arr[0].'",'.$key_auths_arr[1].']';
-			}
-			foreach($regular_arr as $k=>$v){
-				$v_str='';
-				if(is_array($v)){
-					if(count($v)){
-						$v_str='['.implode(',',$v).']';
-					}
-					else{
-						$v_str='[]';
-					}
-				}
-				else{
-					$v_str=$v;
-				}
-				$regular_str_arr[]='"'.$k.'":'.$v_str;
-			}
-			$json.=implode(',',$regular_str_arr);
-		}
-		$json.='}';
 		$json.=',"memo_key":"'.$memo_key.'"';
 		$json.=',"json_metadata":"'.$json_metadata.'"';
 		$json.='}]';
-
-		$raw='05';//operation number is 5
-		$raw.=$this->encode_string($account);
-
-		//master, active and regular are optional<authority> in the node, so each one is
-		//prefixed with a present flag; without it the signed bytes differ from what the node
-		//rebuilds out of the JSON and every account_update dies in verify_authority
-		$raw.='01';
-		$raw.=$this->encode_uint32($master['weight_threshold']);
-		$raw.=$this->encode_array($master['account_auths'],[['string','uint16']]);
-		$raw.=$this->encode_array($master['key_auths'],[['public_key','uint16']]);
-
-		$raw.='01';
-		$raw.=$this->encode_uint32($active['weight_threshold']);
-		$raw.=$this->encode_array($active['account_auths'],[['string','uint16']]);
-		$raw.=$this->encode_array($active['key_auths'],[['public_key','uint16']]);
-
-		$raw.='01';
-		$raw.=$this->encode_uint32($regular['weight_threshold']);
-		$raw.=$this->encode_array($regular['account_auths'],[['string','uint16']]);
-		$raw.=$this->encode_array($regular['key_auths'],[['public_key','uint16']]);
-
 		$raw.=$this->encode_public_key($memo_key);
 		$raw.=$this->encode_string($json_metadata);
 		return [$json,$raw];
