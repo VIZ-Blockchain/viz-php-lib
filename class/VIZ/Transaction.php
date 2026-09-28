@@ -1962,14 +1962,17 @@ class Transaction{
 		$raw.='00';//extensions
 		return [$json,$raw];
 	}
-	function build_set_agent_permission($account,$agent_name,$agent_key,$operations=[],$expiration=0){
-		//HF15 agent access. $operations: wire names (empty = revoke); $expiration: unixtime, 0 = perpetual.
+	function build_set_agent_permission($account,$agent_name,$agent_key,$operations=[],$expiration=0,$addons=[]){
+		//HF15 agent access. $operations: wire names; $addons: off-chain scopes (e.g. 'vizhub'), max 10, each <64 bytes,
+		//not checked by the node; both empty = revoke. $expiration: unixtime, 0 = perpetual.
 		//$agent_key is ignored by the node on revoke; pass '' to send the null key.
 		if(''==$agent_key){
 			$agent_key='VIZ1111111111111111111111111111111114T1Anm';
 		}
 		$operations=array_values(array_unique($operations));
 		sort($operations,SORT_STRING);//flat_set<string>: sorted, unique
+		$addons=array_values(array_unique($addons));
+		sort($addons,SORT_STRING);
 		$json='["set_agent_permission",{';
 		$json.='"account":'.$this->json_string($account);
 		$json.=',"agent_name":'.$this->json_string($agent_name);
@@ -1980,6 +1983,11 @@ class Transaction{
 		}
 		$json.=']';
 		$json.=',"expiration":"'.gmdate('Y-m-d\TH:i:s',$expiration).'"';
+		$json.=',"addons":[';
+		foreach($addons as $i=>$name){
+			$json.=($i?',':'').$this->json_string($name);
+		}
+		$json.=']';
 		$json.=',"extensions":[]';
 		$json.='}]';
 		$raw='69';//op-id 105
@@ -1988,6 +1996,7 @@ class Transaction{
 		$raw.=$this->encode_public_key($agent_key);
 		$raw.=$this->encode_array($operations,'string');
 		$raw.=$this->encode_uint32((int)$expiration);//time_point_sec, unixtime LE
+		$raw.=$this->encode_array($addons,'string');
 		$raw.='00';//extensions
 		return [$json,$raw];
 	}
