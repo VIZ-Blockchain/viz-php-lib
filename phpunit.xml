@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Tests live in tests/Test*.php, so the default suffix ("Test.php", the name ENDING in Test.php)
+	matches nothing — a bare `./phpunit tests/` reports "No tests executed!" and a glob like
+	`./phpunit tests/*` passes several paths, of which PHPUnit 8 runs ONLY THE FIRST (it was running
+	tests/TestKeys.php and silently skipping the rest). This suite pins the suffix to ".php", so
+	`./phpunit` collects every file in tests/.
+-->
+<phpunit bootstrap="./class/autoloader.php" colors="false">
+	<testsuites>
+		<testsuite name="viz-php-lib">
+			<directory suffix=".php">./tests</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

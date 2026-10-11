@@ -23,4 +23,7 @@ jobs:
         wget -O phpunit https://phar.phpunit.de/phpunit-8.phar
         chmod +x phpunit
     - name: PHPUnit
-      run: ./phpunit tests/*
+      # No path argument: phpunit.xml is the source of truth for what the suite is. `tests/*`
+      # expands to several paths and PHPUnit 8 runs ONLY THE FIRST of them — the suite silently
+      # shrank to tests/TestKeys.php the moment a second test file appeared.
+      run: ./phpunit

@@ -1,2 +1,4 @@
 /vendor/
 .claude/*
+.phpunit.result.cache
+/phpunit
