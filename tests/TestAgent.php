@@ -92,4 +92,24 @@ final class TestAgent extends TestCase
         //an unparsable value is returned trimmed, not dropped: the caller can still compare it verbatim
         $this->assertSame('not-a-key', VIZ\Agent::normalize_key(' not-a-key '));
     }
+
+    public function testPoisonedReportedSeparatelyFromGrants(): void
+    {
+        $this->assertFalse(VIZ\Agent::poisoned($this->row()));
+        $this->assertTrue(VIZ\Agent::poisoned($this->row(['operations' => ['transfer', 'account_update']])));
+        //a row without an operation list is not "poisoned", it simply grants nothing
+        $this->assertFalse(VIZ\Agent::poisoned($this->row(['operations' => null])));
+    }
+
+    public function testAddonMatchesIsExactAndCaseSensitive(): void
+    {
+        $row = $this->row();
+        $this->assertTrue(VIZ\Agent::addon_matches($row, 'wallet'));
+        $this->assertFalse(VIZ\Agent::addon_matches($row, 'Wallet'));
+        $this->assertFalse(VIZ\Agent::addon_matches($row, 'exchange'));
+        $this->assertFalse(VIZ\Agent::addon_matches($row, ''));
+        //no addons at all is a no-match, not an "any scope" wildcard
+        $this->assertFalse(VIZ\Agent::addon_matches($this->row(['addons' => []]), 'wallet'));
+        $this->assertFalse(VIZ\Agent::addon_matches($this->row(['addons' => null]), 'wallet'));
+    }
 }

@@ -498,6 +498,31 @@ $row=$agent->find('altbettor','VIZ7iiYUk6hFuieveBJcTVTV33aNuC2vZauXuYc9Hki3moxsm
 The write side is `build_set_agent_permission()` on `VIZ\Transaction`. The raw read method is
 `get_agent_permissions`, mapped to `database_api` like any other.
 
+### Domain auth (`VIZ\Auth`) also accepts an agent
+
+`VIZ\Auth::check()` is the signature check a service runs against a signed
+`domain:action:account:authority:unixtime:nonce` string. It used to look at the account's authority
+only, so an agent key was refused — an agent is not an account and never appears in any authority.
+Now it tries the
+authority first and then the agents, gated on the **addon**: pass the service's own scope as the
+6th constructor argument (or set `$auth->addon` later).
+
+Domain auth is not a chain operation, so the row's operation list is not what a service matches on
+— the addon is the grant (compare `Agent::grants()` for the operation side). The usual agent gates
+still hold: an agent never answers a `master` requirement, the row must be alive, and a row the
+node refuses as poisoned grants nothing at all, addons included. With no addon configured the
+branch is off and `check()` behaves exactly as it did before HF15.
+
+```php
+<?php
+include('./class/autoloader.php');
+$auth=new VIZ\Auth('https://api.viz.world/','wallet.viz.world','auth','regular',60,'wallet');
+//6th argument = our addon scope; omit it and agent keys are not accepted here
+if($auth->check($data,$signature)){
+	//the key belongs to the authority of the account, or is its agent scoped to 'wallet'
+}
+```
+
 ## Prediction Markets (Onix, HF14)
 
 The library ships all 23 signed prediction-market operations and all 29 `prediction_market_api`

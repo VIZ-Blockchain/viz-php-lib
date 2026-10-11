@@ -34,8 +34,9 @@ class Agent{
 
 	public $jsonrpc;
 
+	/** $node — an endpoint, or an existing JsonRPC to share (Auth does this, so both read the same node). */
 	function __construct($node,$debug=false){
-		$this->jsonrpc=new JsonRPC($node,$debug);
+		$this->jsonrpc=($node instanceof JsonRPC)?$node:new JsonRPC($node,$debug);
 	}
 
 	/** Agent rows of a principal as the node returns them (expired rows included; it sweeps them lazily). */
@@ -140,12 +141,36 @@ class Agent{
 		if(!in_array($operation,$row['operations'],true)){
 			return false;
 		}
+		return !self::poisoned($row);
+	}
+
+	/**
+	 * True when the row's list holds a never-delegable name. The node refuses such a row WHOLE
+	 * (`usable_agent_row` bails on the first forbidden name), it does not merely drop that name —
+	 * so the row grants nothing at all, including its off-chain addons.
+	 */
+	static function poisoned($row){
+		if(!isset($row['operations'])||!is_array($row['operations'])){
+			return false;
+		}
 		foreach($row['operations'] as $name){
 			if(in_array($name,self::NEVER_DELEGABLE,true)){
-				return false;
+				return true;
 			}
 		}
-		return true;
+		return false;
+	}
+
+	/**
+	 * True when the row is scoped to $scope. Addons are opaque off-chain scopes: the node stores
+	 * them and never interprets them, so a service matches its OWN scope here, by exact string
+	 * (case-sensitive — the chain does not normalise them for us).
+	 */
+	static function addon_matches($row,$scope){
+		if(!isset($row['addons'])||!is_array($row['addons'])){
+			return false;
+		}
+		return in_array($scope,$row['addons'],true);
 	}
 
 	/** True when $key is a member of the authority with enough weight to meet its threshold. */
