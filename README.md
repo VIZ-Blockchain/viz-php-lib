@@ -452,6 +452,52 @@ else{
 }
 ```
 
+## Agent access (HF15)
+
+HF15 added `set_agent_permission` (op 105): a principal may hand a key an explicit, frozen list of
+its operations — an *agent*. An agent is not an account and never appears in any authority, so the
+old check ("`get_account` and look at `active_authority.key_auths`") silently rejects agent keys.
+The recipe is now **authority OR agents**, and `VIZ\Agent::check()` does both in one call.
+
+Rules the helper mirrors from the node (`agent_evaluator.cpp::usable_agent_row`):
+
+- an agent answers direct active/regular requirements only, and only for operations on its list —
+  the master authority is never satisfied by an agent, nor is a nested/other authority;
+- `expiration` epoch (`1970-01-01T00:00:00`) = perpetual; a date in the past = revoked;
+- empty `operations` and `addons` = revoked; `addons` are off-chain scopes the node stores and
+  never interprets, so a service matches its own scope there;
+- one key belongs to one agent of a principal; a change of master/active, a recovery or a sale
+  wipes every agent of the principal.
+
+`check($account, $key, $operation)` returns `['allowed', 'source' => 'authority'|'agent'|'none',
+'role', 'agent', 'operation']`; `find()` returns the raw row, `has()` a bool. Pass the wire
+operation name (`transfer`, `pm_place_bet`, ...) to check a specific operation — with no operation
+an agent key is only answered as "this is a live agent key", because its grants are per-operation.
+A key that is only in a nested authority (`account_auths`) is not resolved here: use
+`verify_authority` with a signed transaction for the full recursive check. On a node without HF15
+the method is unknown, agents are skipped, and the check degrades to authorities only.
+
+```php
+<?php
+include('./class/autoloader.php');
+$agent=new VIZ\Agent('https://api.viz.world/');
+
+//the key recovered from the request signature
+$verdict=$agent->check('altbettor','VIZ7iiYUk6hFuieveBJcTVTV33aNuC2vZauXuYc9Hki3moxsm9WXe','transfer');
+if($verdict['allowed']){
+	print 'allowed by '.$verdict['source'];//'authority' or 'agent'
+}
+else{
+	print 'denied';
+}
+
+$rows=$agent->get('altbettor');//every agent of the principal as the node returns them
+$row=$agent->find('altbettor','VIZ7iiYUk6hFuieveBJcTVTV33aNuC2vZauXuYc9Hki3moxsm9WXe');//live row, or false
+```
+
+The write side is `build_set_agent_permission()` on `VIZ\Transaction`. The raw read method is
+`get_agent_permissions`, mapped to `database_api` like any other.
+
 ## Prediction Markets (Onix, HF14)
 
 The library ships all 23 signed prediction-market operations and all 29 `prediction_market_api`
