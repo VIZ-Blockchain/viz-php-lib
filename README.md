@@ -477,6 +477,10 @@ A key that is only in a nested authority (`account_auths`) is not resolved here:
 `verify_authority` with a signed transaction for the full recursive check. On a node without HF15
 the method is unknown, agents are skipped, and the check degrades to authorities only.
 
+`Agent::poisoned($row)` and `Agent::addon_matches($row, $scope)` are the two pure row predicates the
+verdicts are built from, exported for callers that already hold a row (and mirrored by `viz.agent`
+in the JS lib).
+
 ```php
 <?php
 include('./class/autoloader.php');
